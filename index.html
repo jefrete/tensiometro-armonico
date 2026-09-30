@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>HARMONIC TENSION SCANNER</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        background: #08090d;
+        color: #e8e8e8;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    header {
+        padding: 22px;
+        border-bottom: 1px solid #222;
+        background: #0d0f15;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 3px;
+    }
+
+    .subtitle {
+        color: #777;
+        margin-top: 7px;
+        font-size: 13px;
+    }
+
+    main {
+        max-width: 1400px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .panel {
+        background: #101218;
+        border: 1px solid #252832;
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 18px;
+    }
+
+    .controls {
+        display: grid;
+        grid-template-columns: 1fr 160px 160px;
+        gap: 12px;
+    }
+
+    input,
+    select,
+    button {
+        background: #171a22;
+        color: white;
+        border: 1px solid #343846;
+        padding: 11px;
+        border-radius: 7px;
+    }
+
+    button {
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #222631;
+    }
+
+    .status {
+        margin-top: 12px;
+        color: #777;
+        font-size: 13px;
+    }
+
+    .scanner {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 20px;
+    }
+
+    .big-note {
+        font-size: 100px;
+        font-weight: bold;
+        text-align: center;
+        padding: 25px;
+        transition: .15s;
+    }
+
+    .function {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .tension {
+        margin-top: 20px;
+    }
+
+    .bar {
+        height: 18px;
+        background: #22252e;
+        border-radius: 20px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .bar-fill {
+        height: 100%;
+        width: 0%;
+        transition: .15s;
+    }
+
+    .green {
+        background: #20d46b;
+    }
+
+    .blue {
+        background: #268cff;
+    }
+
+    .red {
+        background: #ff334c;
+    }
+
+    .yellow {
+        background: #e9d84b;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .info {
+        background: #151821;
+        padding: 12px;
+        border-radius: 8px;
+        text-align: center;
+    }
+
+    .info strong {
+        display: block;
+        font-size: 20px;
+        margin-top: 5px;
+    }
+
+    .piano {
+        position: relative;
+        height: 180px;
+        background: #080808;
+        overflow: hidden;
+        border-radius: 8px;
+        border: 1px solid #333;
+    }
+
+    .white-key {
+        position: absolute;
+        bottom: 0;
+        height: 170px;
+        width: 45px;
+        background: #eee;
+        border: 1px solid #333;
+        color: #111;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding-bottom: 10px;
+        font-size: 11px;
+    }
+
+    .white-key.active {
+        background: #20d46b;
+        box-shadow: 0 0 25px #20d46b;
+    }
+
+    .black-key {
+        position: absolute;
+        top: 0;
+        height: 105px;
+        width: 28px;
+        background: #111;
+        z-index: 5;
+        border-radius: 0 0 5px 5px;
+    }
+
+    .black-key.active {
+        background: #ff334c;
+        box-shadow: 0 0 20px #ff334c;
+    }
+
+    .timeline {
+        height: 80px;
+        background: #080a0e;
+        border: 1px solid #252832;
+        display: flex;
+        align-items: center;
+        overflow-x: auto;
+        padding: 10px;
+        gap: 3px;
+    }
+
+    .event {
+        min-width: 16px;
+        height: 55px;
+        border-radius: 3px;
+        transition: .1s;
+    }
+
+    .event.green {
+        background: #20d46b;
+    }
+
+    .event.blue {
+        background: #268cff;
+    }
+
+    .event.red {
+        background: #ff334c;
+    }
+
+    .event.yellow {
+        background: #e9d84b;
+    }
+
+    .legend {
+        display: flex;
+        gap: 20px;
+        margin-top: 12px;
+        font-size: 13px;
+    }
+
+    .legend span {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .intervals {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .interval {
+        padding: 10px 14px;
+        background: #171a22;
+        border: 1px solid #303441;
+        border-radius: 6px;
+    }
+
+    .midi-log {
+        height: 130px;
+        overflow-y: auto;
+        background: #08090d;
+        padding: 10px;
+        font-family: monospace;
+        font-size: 12px;
+    }
+
+    .youtube {
+        display: grid;
+        grid-template-columns: 1fr 130px;
+        gap: 10px;
+    }
+
+    @media(max-width: 800px) {
+        .scanner,
+        .controls,
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .big-note {
+            font-size: 70px;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>HARMONIC TENSION SCANNER</h1>
+    <div class="subtitle">
+        AUDIO → NOTAS → INTERVALOS → FUNCIÓN ARMÓNICA → COLOR → MIDI
+    </div>
+</header>
+
+<main>
+
+    <!-- YOUTUBE -->
+    <section class="panel">
+
+        <h3>🎬 Fuente de YouTube</h3>
+
+        <div class="youtube">
+            <input
+                id="youtubeUrl"
+                type="text"
+                placeholder="Pegá acá un link de YouTube..."
+            >
+
+            <button onclick="cargarYoutube()">
+                CARGAR
+            </button>
+        </div>
+
+        <div id="youtubeStatus" class="status">
+            El análisis directo del audio de YouTube está preparado como módulo de entrada.
+        </div>
+
+    </section>
+
+
+    <!-- CONFIGURACIÓN -->
+    <section class="panel">
+
+        <h3>⚙️ Configuración tonal</h3>
+
+        <div class="controls">
+
+            <select id="tonica">
+                <option value="C">C</option>
+                <option value="C#">C#</option>
+                <option value="D">D</option>
+                <option value="D#">D#</option>
+                <option value="E">E</option>
+                <option value="F">F</option>
+                <option value="F#">F#</option>
+                <option value="G">G</option>
+                <option value="G#">G#</option>
+                <option value="A" selected>A</option>
+                <option value="A#">A#</option>
+                <option value="B">B</option>
+            </select>
+
+            <select id="modo">
+                <option value="major">Mayor</option>
+                <option value="minor" selected>Menor</option>
+            </select>
+
+            <button onclick="setTonica()">
+                APLICAR
+            </button>
+
+        </div>
+
+        <div class="status">
+            Tonalidad actual:
+            <strong id="tonalidad">A menor</strong>
+        </div>
+
+    </section>
+
+
+    <!-- SCANNER -->
+    <section class="panel">
+
+        <div class="scanner">
+
+            <div>
+
+                <div id="bigNote" class="big-note">
+                    —
+                </div>
+
+                <div id="function" class="function">
+                    ESPERANDO MIDI
+                </div>
+
+                <div class="tension">
+
+                    <div>
+                        TENSIÓN ARMÓNICA:
+                        <strong id="tensionValue">0%</strong>
+                    </div>
+
+                    <div class="bar">
+                        <div id="tensionBar" class="bar-fill"></div>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <h3>ANÁLISIS</h3>
+
+                <div class="info">
+                    Nota
+                    <strong id="notaInfo">—</strong>
+                </div>
+
+                <br>
+
+                <div class="info">
+                    Grado
+                    <strong id="gradoInfo">—</strong>
+                </div>
+
+                <br>
+
+                <div class="info">
+                    Función
+                    <strong id="funcionInfo">—</strong>
+                </div>
+
+                <br>
+
+                <div class="info">
+                    MIDI
+                    <strong id="midiInfo">—</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- PIANO -->
+    <section class="panel">
+
+        <h3>🎹 Piano / MIDI en tiempo real</h3>
+
+        <div id="piano" class="piano"></div>
+
+        <div class="status">
+            Tocá una tecla de tu controlador MIDI.
+            Si el navegador pide permiso, aceptalo.
+        </div>
+
+    </section>
+
+
+    <!-- INTERVALOS -->
+    <section class="panel">
+
+        <h3>📐 Intervalos detectados</h3>
+
+        <div id="intervals" class="intervals">
+            <div class="interval">
+                Esperando notas...
+            </div>
+        </div>
+
+    </section>
+
+
+    <!-- TIMELINE -->
+    <section class="panel">
+
+        <h3>🌈 Mapa temporal de tensión</h3>
+
+        <div id="timeline" class="timeline"></div>
+
+        <div class="legend">
+
+            <span>
+                <i class="dot green"></i>
+                Tónica / reposo
+            </span>
+
+            <span>
+                <i class="dot blue"></i>
+                Subdominante / movimiento
+            </span>
+
+            <span>
+                <i class="dot red"></i>
+                Dominante / tensión
+            </span>
+
+            <span>
+                <i class="dot yellow"></i>
+                Intermedio
+            </span>
+
+        </div>
+
+    </section>
+
+
+    <!-- MIDI LOG -->
+    <section class="panel">
+
+        <h3>📡 MIDI Monitor</h3>
+
+        <div id="midiLog" class="midi-log">
+            Inicializando MIDI...
+        </div>
+
+    </section>
+
+</main>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURACIÓN
+========================================================= */
+
+const notas = [
+    "C",
+    "C#",
+    "D",
+    "D#",
+    "E",
+    "F",
+    "F#",
+    "G",
+    "G#",
+    "A",
+    "A#",
+    "B"
+];
+
+let tonica = 9; // A
+let modo = "minor";
+
+let notasActivas = new Set();
+
+
+/* =========================================================
+   ESCALAS
+========================================================= */
+
+const escalaMayor = [
+    0, 2, 4, 5, 7, 9, 11
+];
+
+const escalaMenor = [
+    0, 2, 3, 5, 7, 8, 10
+];
+
+
+/* =========================================================
+   FUNCIÓN TONAL
+========================================================= */
+
+function analizarNota(midi) {
+
+    const pitch = midi % 12;
+
+    let intervalo =
+        (pitch - tonica + 12) % 12;
+
+    let escala =
+        modo === "major"
+            ? escalaMayor
+            : escalaMenor;
+
+    let nombre = notas[pitch];
+
+    let grado = "Cromático";
+    let funcion = "INTERMEDIO";
+    let color = "yellow";
+    let tension = 50;
+
+    /*
+        GRADOS
+
+        I   = TÓNICA
+        IV  = SUBDOMINANTE
+        V   = DOMINANTE
+    */
+
+    if (intervalo === 0) {
+
+        grado = "I";
+        funcion = "TÓNICA";
+        color = "green";
+        tension = 5;
+
+    }
+
+    else if (intervalo === 5) {
+
+        grado = "IV";
+        funcion = "SUBDOMINANTE";
+        color = "blue";
+        tension = 45;
+
+    }
+
+    else if (intervalo === 7) {
+
+        grado = "V";
+        funcion = "DOMINANTE";
+        color = "red";
+        tension = 85;
+
+    }
+
+    else {
+
+        /*
+            Otros grados:
+        */
+
+        const posicion =
+            escala.indexOf(intervalo);
+
+        if (posicion !== -1) {
+
+            grado =
+                ["I","II","III","IV","V","VI","VII"][posicion];
+
+            if (posicion === 1 ||
+                posicion === 3 ||
+                posicion === 5) {
+
+                funcion = "MOVIMIENTO";
+                color = "blue";
+                tension = 40;
+
+            } else {
+
+                funcion = "ESTABILIDAD";
+                color = "yellow";
+                tension = 25;
+            }
+
+        }
+
+        /*
+            Tritono
+        */
+
+        if (intervalo === 6) {
+
+            grado = "♭5 / TRITONO";
+            funcion = "TENSIÓN";
+            color = "red";
+            tension = 95;
+
+        }
+
+    }
+
+    return {
+        pitch,
+        nombre,
+        grado,
+        funcion,
+        color,
+        tension,
+        intervalo
+    };
+}
+
+
+/* =========================================================
+   MOSTRAR NOTA
+========================================================= */
+
+function mostrarNota(midi) {
+
+    const resultado =
+        analizarNota(midi);
+
+    document.getElementById("bigNote")
+        .textContent = resultado.nombre;
+
+    document.getElementById("function")
+        .textContent =
+        resultado.grado +
+        " · " +
+        resultado.funcion;
+
+    document.getElementById("notaInfo")
+        .textContent =
+        resultado.nombre;
+
+    document.getElementById("gradoInfo")
+        .textContent =
+        resultado.grado;
+
+    document.getElementById("funcionInfo")
+        .textContent =
+        resultado.funcion;
+
+    document.getElementById("midiInfo")
+        .textContent =
+        midi;
+
+    document.getElementById("tensionValue")
+        .textContent =
+        resultado.tension + "%";
+
+    const bar =
+        document.getElementById("tensionBar");
+
+    bar.style.width =
+        resultado.tension + "%";
+
+    bar.className =
+        "bar-fill " + resultado.color;
+
+
+    const note =
+        document.getElementById("bigNote");
+
+    note.style.color =
+        getColor(resultado.color);
+
+
+    pintarTecla(midi);
+
+    agregarTimeline(resultado.color);
+
+    actualizarIntervalos();
+
+}
+
+
+/* =========================================================
+   COLORES
+========================================================= */
+
+function getColor(color) {
+
+    if (color === "green")
+        return "#20d46b";
+
+    if (color === "blue")
+        return "#268cff";
+
+    if (color === "red")
+        return "#ff334c";
+
+    return "#e9d84b";
+}
+
+
+/* =========================================================
+   TIMELINE
+========================================================= */
+
+function agregarTimeline(color) {
+
+    const timeline =
+        document.getElementById("timeline");
+
+    const evento =
+        document.createElement("div");
+
+    evento.className =
+        "event " + color;
+
+    timeline.appendChild(evento);
+
+    timeline.scrollLeft =
+        timeline.scrollWidth;
+}
+
+
+/* =========================================================
+   INTERVALOS
+========================================================= */
+
+function actualizarIntervalos() {
+
+    const container =
+        document.getElementById("intervals");
+
+    container.innerHTML = "";
+
+    const array =
+        [...notasActivas];
+
+    if (array.length === 0) {
+
+        container.innerHTML =
+            `<div class="interval">
+                Esperando notas...
+            </div>`;
+
+        return;
+    }
+
+    const base = array[0];
+
+    array.forEach(midi => {
+
+        const distancia =
+            Math.abs(midi - base) % 12;
+
+        const nombres = {
+
+            0: "Unísono",
+            1: "2ª menor",
+            2: "2ª mayor",
+            3: "3ª menor",
+            4: "3ª mayor",
+            5: "4ª justa",
+            6: "Tritono",
+            7: "5ª justa",
+            8: "6ª menor",
+            9: "6ª mayor",
+            10: "7ª menor",
+            11: "7ª mayor"
+
+        };
+
+        const div =
+            document.createElement("div");
+
+        div.className = "interval";
+
+        div.innerHTML =
+            `<strong>${notas[midi % 12]}</strong>
+             → ${nombres[distancia]}`;
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+/* =========================================================
+   PIANO
+========================================================= */
+
+function crearPiano() {
+
+    const piano =
+        document.getElementById("piano");
+
+    const inicio = 48; // C3
+    const fin = 72;    // C5
+
+    let whiteIndex = 0;
+
+    for (let midi = inicio; midi <= fin; midi++) {
+
+        const pitch =
+            midi % 12;
+
+        const esNegra =
+            [1,3,6,8,10].includes(pitch);
+
+        if (!esNegra) {
+
+            const tecla =
+                document.createElement("div");
+
+            tecla.className =
+                "white-key";
+
+            tecla.dataset.midi =
+                midi;
+
+            tecla.style.left =
+                (whiteIndex * 45) + "px";
+
+            tecla.textContent =
+                notas[pitch];
+
+            piano.appendChild(tecla);
+
+            whiteIndex++;
+
+        }
+
+    }
+
+    /*
+        Ahora las negras
+    */
+
+    whiteIndex = 0;
+
+    for (let midi = inicio; midi <= fin; midi++) {
+
+        const pitch =
+            midi % 12;
+
+        const esNegra =
+            [1,3,6,8,10].includes(pitch);
+
+        if (!esNegra) {
+
+            if (
+                [0,2,5,7,9]
+                .includes(pitch)
+            ) {
+
+                const tecla =
+                    document.createElement("div");
+
+                tecla.className =
+                    "black-key";
+
+                tecla.dataset.midi =
+                    midi + 1;
+
+                tecla.style.left =
+                    (whiteIndex * 45 + 31) + "px";
+
+                piano.appendChild(tecla);
+
+            }
+
+            whiteIndex++;
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   PINTAR TECLA
+========================================================= */
+
+function pintarTecla(midi) {
+
+    document.querySelectorAll(".white-key, .black-key")
+        .forEach(tecla => {
+
+            tecla.classList.remove("active");
+
+        });
+
+    const tecla =
+        document.querySelector(
+            `[data-midi="${midi}"]`
+        );
+
+    if (tecla) {
+
+        const resultado =
+            analizarNota(midi);
+
+        tecla.classList.add("active");
+
+        tecla.style.background =
+            getColor(resultado.color);
+
+    }
+
+}
+
+
+/* =========================================================
+   MIDI
+========================================================= */
+
+async function iniciarMIDI() {
+
+    if (!navigator.requestMIDIAccess) {
+
+        logMIDI(
+            "Este navegador no soporta Web MIDI."
+        );
+
+        return;
+    }
+
+    try {
+
+        const midiAccess =
+            await navigator.requestMIDIAccess();
+
+        logMIDI(
+            "MIDI conectado correctamente."
+        );
+
+        for (
+            const input
+            of midiAccess.inputs.values()
+        ) {
+
+            input.onmidimessage =
+                recibirMIDI;
+
+            logMIDI(
+                "Entrada encontrada: " +
+                input.name
+            );
+
+        }
+
+    }
+
+    catch(error) {
+
+        logMIDI(
+            "Error MIDI: " +
+            error.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   RECIBIR MIDI
+========================================================= */
+
+function recibirMIDI(event) {
+
+    const data =
+        event.data;
+
+    const comando =
+        data[0] & 0xf0;
+
+    const nota =
+        data[1];
+
+    const velocidad =
+        data[2];
+
+
+    /*
+        NOTE ON
+    */
+
+    if (
+        comando === 0x90 &&
+        velocidad > 0
+    ) {
+
+        notasActivas.add(nota);
+
+        mostrarNota(nota);
+
+        logMIDI(
+            `NOTE ON  ${notas[nota % 12]}  MIDI:${nota}`
+        );
+
+    }
+
+
+    /*
+        NOTE OFF
+    */
+
+    if (
+        comando === 0x80 ||
+        (
+            comando === 0x90 &&
+            velocidad === 0
+        )
+    ) {
+
+        notasActivas.delete(nota);
+
+        logMIDI(
+            `NOTE OFF ${notas[nota % 12]}  MIDI:${nota}`
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   MIDI LOG
+========================================================= */
+
+function logMIDI(texto) {
+
+    const log =
+        document.getElementById("midiLog");
+
+    const linea =
+        document.createElement("div");
+
+    linea.textContent =
+        "> " + texto;
+
+    log.appendChild(linea);
+
+    log.scrollTop =
+        log.scrollHeight;
+
+}
+
+
+/* =========================================================
+   TONALIDAD
+========================================================= */
+
+function setTonica() {
+
+    tonica =
+        notas.indexOf(
+            document.getElementById("tonica").value
+        );
+
+    modo =
+        document.getElementById("modo").value;
+
+    document.getElementById("tonalidad")
+        .textContent =
+        notas[tonica] +
+        " " +
+        (modo === "major"
+            ? "mayor"
+            : "menor");
+
+}
+
+
+/* =========================================================
+   YOUTUBE
+========================================================= */
+
+function cargarYoutube() {
+
+    const url =
+        document.getElementById("youtubeUrl").value;
+
+    const status =
+        document.getElementById("youtubeStatus");
+
+    if (!url) {
+
+        status.textContent =
+            "Pegá primero un enlace.";
+
+        return;
+
+    }
+
+    let videoID = null;
+
+    try {
+
+        const parsed =
+            new URL(url);
+
+        if (
+            parsed.hostname.includes("youtube.com")
+        ) {
+
+            videoID =
+                parsed.searchParams.get("v");
+
+        }
+
+        if (
+            parsed.hostname.includes("youtu.be")
+        ) {
+
+            videoID =
+                parsed.pathname.substring(1);
+
+        }
+
+    }
+
+    catch {
+
+        status.textContent =
+            "El enlace no parece válido.";
+
+        return;
+
+    }
+
+
+    if (!videoID) {
+
+        status.textContent =
+            "No pude encontrar el ID del video.";
+
+        return;
+
+    }
+
+
+    status.innerHTML =
+        `
+        Video detectado:
+        <strong>${videoID}</strong>
+        <br><br>
+        El siguiente módulo puede conectar este ID
+        con el analizador de audio.
+        `;
+
+}
+
+
+/* =========================================================
+   INICIALIZACIÓN
+========================================================= */
+
+crearPiano();
+
+iniciarMIDI();
+
+setTonica();
+
+
+/* =========================================================
+   DEMO SIN MIDI
+   Teclas del teclado de PC
+
+   A = C
+   S = D
+   D = E
+   F = F
+   G = G
+   H = A
+   J = B
+========================================================= */
+
+const tecladoPC = {
+
+    "a": 60,
+    "s": 62,
+    "d": 64,
+    "f": 65,
+    "g": 67,
+    "h": 69,
+    "j": 71,
+    "k": 72
+
+};
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (event.repeat)
+            return;
+
+        const midi =
+            tecladoPC[event.key.toLowerCase()];
+
+        if (midi !== undefined) {
+
+            notasActivas.add(midi);
+
+            mostrarNota(midi);
+
+            logMIDI(
+                `PC KEY ${event.key.toUpperCase()} → MIDI ${midi}`
+            );
+
+        }
+
+    }
+);
+
+
+document.addEventListener(
+    "keyup",
+    event => {
+
+        const midi =
+            tecladoPC[event.key.toLowerCase()];
+
+        if (midi !== undefined) {
+
+            notasActivas.delete(midi);
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
