@@ -112,6 +112,26 @@ header{padding-right:74px}
 .etitle{font:800 12px Unbounded,sans-serif;margin:2px 0 8px}
 .ecan{height:180px;border:3px solid var(--k);border-radius:20px;overflow:hidden}
 #ph{position:absolute;top:0;bottom:0;width:6px;background:rgba(255,43,209,.75);border:2px solid var(--k);border-radius:6px;display:none;pointer-events:none}
+/* INSTRUMENTOS DE TIEMPO Y ARMONIA */
+.egrid{grid-template-columns:1fr;gap:18px}
+.ebox{padding:14px 16px}
+.ecan{height:230px}
+#ecgGrid .ebox:first-child .ecan{height:250px}
+#ecgGrid .ebox:last-child{display:block}
+#ecgGrid .ebox:last-child .ecan{height:360px}
+.timeline-card{margin-top:16px}
+.timeline{position:relative;border:3px solid var(--k);border-radius:22px;padding:18px 18px 14px;background:#fff;box-shadow:6px 6px 0 var(--pk)}
+.tline{position:relative;height:54px;margin:8px 0 16px;border:2px solid var(--k);border-radius:999px;overflow:hidden;background:repeating-linear-gradient(90deg,#fff 0 9.9%,#f2f2f2 10%)}
+.tline .fill{position:absolute;inset:0 auto 0 0;width:0;background:linear-gradient(90deg,#00e08a,#2b7bff,#ff1654);opacity:.82}
+.tline .playhead{position:absolute;top:-2px;bottom:-2px;left:0;width:5px;background:var(--pk);box-shadow:0 0 12px var(--pk);border:2px solid var(--k);transform:translateX(-50%)}
+.tline .marker{position:absolute;top:0;bottom:0;width:1px;background:rgba(5,5,7,.22)}
+.tline .label{position:absolute;left:14px;top:50%;transform:translateY(-50%);font:800 10px Unbounded,sans-serif;letter-spacing:.04em;z-index:2;background:#fff;padding:4px 8px;border:2px solid var(--k);border-radius:999px}
+.tmeta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:700 11px 'Space Grotesk',sans-serif;margin-top:-8px}
+.latency-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:2px dashed #bbb}
+.latency-row input{flex:1;min-width:180px;accent-color:#ff2bd1}
+.latency-value{font:800 12px Unbounded,sans-serif;min-width:90px;text-align:right}
+@media(max-width:600px){.ecan,#ecgGrid .ebox:first-child .ecan{height:190px}#ecgGrid .ebox:last-child .ecan{height:270px}.timeline{padding:12px}.tline{height:46px}.tline .label{font-size:8px}}
+
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}.btn:hover{transform:none}}
 
 /* INTERFAZ NEÓN */
@@ -144,6 +164,10 @@ body::before{left:0}body::after{right:0}
 .stage:fullscreen{height:100dvh!important;min-height:100dvh!important}.stage:fullscreen .mini-map{top:104px}.stage:fullscreen .video{top:58%}
 @media(max-width:820px){.stage:fullscreen{height:100dvh!important;min-height:100dvh!important}.stage:fullscreen .mini-map{top:150px}.stage:fullscreen .video{top:52%;width:90%}}
 .mini-map{isolation:isolate}.mini-map-label{pointer-events:none}
+
+/* Modo F11: la Fullscreen API ocupa toda la ventana, no solo el panel */
+html:fullscreen, html:fullscreen body{width:100%;height:100%;margin:0;overflow:hidden}
+html:fullscreen .stage{width:100vw;height:100dvh!important;min-height:100dvh!important;border-radius:0}
 </style>
 </head>
 <body>
@@ -228,7 +252,19 @@ body::before{left:0}body::after{right:0}
   <div class="egrid" id="ecgGrid">
     <div class="ebox"><div class="etitle">Latido armónico</div><div class="ecg"><canvas id="ecg"></canvas></div></div>
   </div>
-  <div class="status">Cinco formas de ver la misma tensión: latido, sismógrafo, osciloscopio, radar y figura de Lissajous.</div>
+  <div class="status">Latido = pulso de tensión · sismógrafo = movimiento armónico · radar = posición de las notas dentro del acorde.</div>
+</section>
+
+<section class="card timeline-card">
+  <h2>Posición musical</h2>
+  <div class="timeline">
+    <div class="tline" id="songLine"><div class="fill" id="songFill"></div><div class="playhead" id="songHead"></div><div class="marker" style="left:25%"></div><div class="marker" style="left:50%"></div><div class="marker" style="left:75%"></div><span class="label">CANCIÓN</span></div>
+    <div class="tmeta"><span id="songNow">00:00</span><span id="songPos">YouTube · esperando posición</span><span id="songDur">00:00</span></div>
+    <div class="tline" id="tensionLine"><div class="fill" id="tensionFill"></div><div class="playhead" id="tensionHead"></div><span class="label">TENSIÓN</span></div>
+    <div class="tmeta"><span>reposo</span><span>movimiento</span><span>máxima atracción</span></div>
+    <div class="latency-row"><b>Ajuste de latencia</b><input id="latency" type="range" min="-2000" max="2000" step="10" value="0"><span class="latency-value" id="latencyValue">0 ms</span></div>
+    <div class="status">La línea superior marca por qué parte del tema va el reproductor. La inferior desplaza el punto de análisis según la latencia configurada.</div>
+  </div>
 </section>
 
 <section class="card"><h2>Historial de tensión</h2><div id="history" class="history"></div>
@@ -401,13 +437,16 @@ function wave(p,a){
   return 0;
 }
 function ecgLoop(){
-  const w=cv.width,h=cv.height,s=2;
+  const w=cv.width,h=cv.height,s=3;
   ctx.drawImage(cv,-s,0);ctx.clearRect(w-s,0,s,h);
-  const a=active.size?Math.min(h/2-8,15+ecgT*.6):0,period=Math.max(60,170-ecgT*1.2);
-  phase=(phase+s/period)%1;
+  const tension=ecgT/100,beatMs=Math.max(52,190-tension*118);
+  phase=(phase+s/beatMs)%1;
+  const a=active.size?Math.min(h*.42,12+tension*h*.34):2;
   const y=h/2+wave(phase,a);
   ctx.beginPath();ctx.moveTo(w-s,prevY===null?y:prevY);ctx.lineTo(w,y);
-  ctx.strokeStyle=active.size?COL[ecgC]:"#bbb";ctx.lineWidth=3;ctx.stroke();prevY=y;
+  ctx.strokeStyle=active.size?COL[ecgC]:"#aaa";ctx.lineWidth=3+tension*2;ctx.stroke();
+  if(active.size&&phase<.055){ctx.fillStyle=COL[ecgC];ctx.beginPath();ctx.arc(w-4,y,4+tension*5,0,Math.PI*2);ctx.fill()}
+  prevY=y;
   requestAnimationFrame(ecgLoop);
 }
 
@@ -430,6 +469,28 @@ async function initMIDI(){
   }catch(err){log("No se pudo iniciar MIDI: "+err.message)}
 }
 
+/* POSICIÓN MUSICAL + LATENCIA */
+let ytPlayer=null,ytReady=false,latencyMs=0,analysisStarted=0,analysisTimer=null;
+const songLine=$("songLine"),songFill=$("songFill"),songHead=$("songHead"),songNow=$("songNow"),songDur=$("songDur"),songPos=$("songPos"),tensionHead=$("tensionHead"),tensionFill=$("tensionFill"),latency=$("latency"),latencyValue=$("latencyValue");
+const fmtTime=s=>{s=Math.max(0,Math.floor(s||0));return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
+latency.oninput=()=>{latencyMs=+latency.value;latencyValue.textContent=(latencyMs>0?"+":"")+latencyMs+" ms"};
+function updateTimeline(){
+  let pos=0,dur=0;
+  try{if(ytPlayer&&ytReady){pos=ytPlayer.getCurrentTime()||0;dur=ytPlayer.getDuration()||0}}catch(_){}
+  if(!dur&&analysisStarted)pos=(performance.now()-analysisStarted)/1000;
+  const corrected=Math.max(0,pos+latencyMs/1000);
+  const pct=dur?Math.max(0,Math.min(100,corrected/dur*100)):Math.min(100,(corrected%300)/3);
+  songFill.style.width=pct+"%";songHead.style.left=pct+"%";tensionHead.style.left=pct+"%";tensionFill.style.width=pct+"%";
+  songNow.textContent=fmtTime(corrected);songDur.textContent=dur?fmtTime(dur):"--:--";songPos.textContent=dur?"YouTube · posición real":"Análisis · posición estimada";
+  requestAnimationFrame(updateTimeline);
+}
+requestAnimationFrame(updateTimeline);
+function mountYT(){
+  const fr=$("ytFrame");if(!fr)return;
+  const build=()=>{try{ytPlayer=new YT.Player("ytFrame",{events:{onReady:()=>{ytReady=true},onStateChange:e=>{if(e.data===1&&!analysisStarted)analysisStarted=performance.now()}}})}catch(_){}};
+  if(window.YT&&YT.Player)build();else{window.onYouTubeIframeAPIReady=build; if(!document.querySelector('script[data-yt-api]')){const sc=document.createElement("script");sc.src="https://www.youtube.com/iframe_api";sc.dataset.ytApi="1";document.head.appendChild(sc)}}
+}
+
 /* YOUTUBE: video + playlist */
 $("youtubeButton").onclick=()=>{
   const st=$("youtubeStatus"),url=$("youtube").value.trim();
@@ -448,15 +509,16 @@ $("youtubeButton").onclick=()=>{
 
   let src="";
   if(list && !id){
-    src='https://www.youtube.com/embed/videoseries?list='+encodeURIComponent(list)+'&autoplay=1&playsinline=1&rel=0';
+    src='https://www.youtube.com/embed/videoseries?list='+encodeURIComponent(list)+'&autoplay=1&playsinline=1&rel=0&enablejsapi=1';
   }else{
-    src='https://www.youtube.com/embed/'+id+'?autoplay=1&playsinline=1&rel=0';
+    src='https://www.youtube.com/embed/'+id+'?autoplay=1&playsinline=1&rel=0&enablejsapi=1';
     if(list)src+='&list='+encodeURIComponent(list);
   }
-  $("video").innerHTML='<iframe src="'+src+'" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+  $("video").innerHTML='<iframe id="ytFrame" src="'+src+'" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
   const what=list?(id?'video + playlist':'playlist'):('video '+id);
   st.innerHTML='✅ '+what+' cargado. La playlist puede avanzar sola al siguiente tema. Si el navegador bloquea el autoplay, tocá Play una vez y seguirá la lista.'+(location.protocol==="file:"?'<br><b style="color:var(--rd)">⚠ Abriste el archivo directo (file://): YouTube puede bloquear el reproductor. Abrilo con Live Server o un servidor local.</b>':'');
   log("YouTube → "+what);
+  ytPlayer=null;ytReady=false;analysisStarted=0;setTimeout(mountYT,350);
 };
 $("capture").onclick=()=>capture();
 
@@ -833,33 +895,36 @@ function mkEcg(name,bg,draw){
 }
 const pcsNow=()=>[...new Set([...active].map(n=>n%12))];
 mkEcg("Sismógrafo de tensión","repeating-linear-gradient(#ffd9a8 0 1px,transparent 1px 24px),repeating-linear-gradient(90deg,#ffd9a8 0 1px,transparent 1px 24px),#fff6e6",(g,w,h,t,st)=>{
-  const s=3;g.drawImage(g.canvas,-s,0);g.clearRect(w-s,0,s,h);
-  const amp=active.size?6+ecgT*.9:1.5,y=h/2+(Math.random()-.5)*amp*(Math.random()<.08?3:1),py=st.y===undefined?y:st.y;
-  g.lineCap="round";g.globalAlpha=.9;g.strokeStyle="#ff8a00";g.lineWidth=3;g.beginPath();g.moveTo(w-s,py);g.lineTo(w,y);g.stroke();
-  g.globalAlpha=.35;g.strokeStyle="#ff1654";g.lineWidth=9;g.stroke();g.globalAlpha=1;st.y=y;
+  const s=4;g.drawImage(g.canvas,-s,0);g.clearRect(w-s,0,s,h);
+  const intensity=active.size?(ecgT/100):0;
+  st.p=(st.p||0)+.045+intensity*.18;
+  const base=h/2,amp=active.size?(8+intensity*(h*.36)):2;
+  const harmonic=Math.sin(st.p)*.55+Math.sin(st.p*2.03)*.22+Math.sin(st.p*.47)*.23;
+  const noise=(Math.random()-.5)*amp*.12*(.25+intensity);
+  const y=base-harmonic*amp-noise,py=st.y===undefined?y:st.y;
+  g.lineCap="round";g.strokeStyle=COL[ecgC];g.lineWidth=3+intensity*2;g.globalAlpha=.9;g.beginPath();g.moveTo(w-s,py);g.lineTo(w,y);g.stroke();
+  if(active.size&&ecgT>=65){g.strokeStyle="#ff1654";g.globalAlpha=.28;g.lineWidth=10;g.stroke()}
+  g.globalAlpha=1;st.y=y;
+  g.fillStyle="#050507";g.font="800 11px Unbounded,sans-serif";g.fillText(active.size?"TENSION "+ecgT+"%":"ESPERANDO AUDIO",12,18);
 });
-mkEcg("Osciloscopio modular","#04140b",(g,w,h,t,st)=>{
-  const s=3;g.drawImage(g.canvas,-s,0);g.clearRect(w-s,0,s,h);
-  st.p=(st.p||0)+s*(.05+ecgT*.0035);const m=ecgT/130,amp=active.size?h*.2+ecgT*.0012*h:h*.04;
-  const v=Math.sin(st.p)*(1-m)+Math.sign(Math.sin(st.p))*.85*m+.3*Math.sin(st.p*3)*m,y=h/2-v*amp,py=st.y===undefined?y:st.y;
-  g.strokeStyle="#39ff88";g.lineWidth=3;g.shadowColor="#39ff88";g.shadowBlur=12;g.beginPath();g.moveTo(w-s,py);g.lineTo(w,y);g.stroke();g.shadowBlur=0;st.y=y;
+mkEcg("Radar de acordes","#07070b",(g,w,h,t,st)=>{
+  g.fillStyle="#07070b";g.fillRect(0,0,w,h);
+  const cx=w/2,cy=h/2+8,r=Math.min(w,h)*.39;
+  for(let k=1;k<=4;k++){g.strokeStyle=`rgba(255,43,209,${k===4?.42:.18})`;g.lineWidth=k===4?3:1.5;g.beginPath();g.arc(cx,cy,r*k/4,0,Math.PI*2);g.stroke()}
+  for(let p=0;p<12;p++){const a=-Math.PI/2+p*Math.PI*2/12;g.strokeStyle=p===root?"rgba(255,255,255,.75)":"rgba(255,255,255,.12)";g.lineWidth=p===root?3:1;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);g.stroke();g.fillStyle="#fff";g.font="800 11px Unbounded,sans-serif";g.textAlign="center";g.fillText(NOTES[p],cx+Math.cos(a)*(r+22),cy+Math.sin(a)*(r+22)+4)}
+  const pcs=pcsNow();
+  const pulse=1+.06*Math.sin(t*5)*(ecgT/100);
+  if(pcs.length){
+    g.beginPath();
+    pcs.forEach((p,i)=>{const a=-Math.PI/2+p*Math.PI*2/12,rad=r*(.28+.58*Math.min(1,ecgT/100))*pulse,x=cx+Math.cos(a)*rad,y=cy+Math.sin(a)*rad;i?g.lineTo(x,y):g.moveTo(x,y)});
+    if(pcs.length>2)g.closePath();
+    g.fillStyle=ecgC==="red"?"rgba(255,22,84,.24)":ecgC==="blue"?"rgba(43,123,255,.22)":"rgba(0,224,138,.22)";g.fill();g.strokeStyle=COL[ecgC];g.lineWidth=5;g.shadowColor=COL[ecgC];g.shadowBlur=18;g.stroke();g.shadowBlur=0;
+    pcs.forEach(p=>{const a=-Math.PI/2+p*Math.PI*2/12,rad=r*(.28+.58*Math.min(1,ecgT/100))*pulse;g.fillStyle=COL[ecgC];g.beginPath();g.arc(cx+Math.cos(a)*rad,cy+Math.sin(a)*rad,7+(ecgT/100)*5,0,Math.PI*2);g.fill()});
+  }
+  g.textAlign="left";g.fillStyle="#fff";g.font="800 13px Unbounded,sans-serif";g.fillText(active.size?"ACORDE · "+([...active].map(n=>NOTES[n%12]).join(" ")):"ESPERANDO ACORDE",18,24);
+  g.font="700 11px 'Space Grotesk',sans-serif";g.fillText("Tensión "+ecgT+"% · "+(ecgC==="green"?"reposo":ecgC==="blue"?"movimiento":ecgC==="red"?"tirón":"cromático"),18,h-16);
 });
-mkEcg("Radar de acordes","#0a0a0f",(g,w,h,t)=>{
-  g.fillStyle="#0a0a0f";g.fillRect(0,0,w,h);const cx=w/2,cy=h/2,r=Math.min(w,h)/2-8;
-  g.strokeStyle="rgba(255,138,0,.4)";g.lineWidth=2;[1,.66,.33].forEach(k=>{g.beginPath();g.arc(cx,cy,r*k,0,7);g.stroke()});
-  const sw=-Math.PI/2+(t*(.8+ecgT/45))%(Math.PI*2);
-  for(let j=0;j<30;j++){const a=sw-j*.03;g.strokeStyle="rgba(255,138,0,"+(1-j/30)*.5+")";g.lineWidth=6;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);g.stroke()}
-  pcsNow().forEach(p=>{const th=-Math.PI/2+p/12*Math.PI*2,d=((sw-th)%(Math.PI*2)+Math.PI*2)%(Math.PI*2),it=1-d/(Math.PI*2),rad=r*(.35+.55*ecgT/100);
-    g.globalAlpha=.25+.75*it;g.fillStyle=COL[ecgC];g.beginPath();g.arc(cx+Math.cos(th)*rad,cy+Math.sin(th)*rad,4+9*it,0,7);g.fill();g.globalAlpha=1;
-    g.fillStyle="#fff";g.font="10px Arial";g.textAlign="center";g.fillText(NOTES[p],cx+Math.cos(th)*(r+0)*.97,cy+Math.sin(th)*r*.97+3)});
-});
-mkEcg("Lissajous de intervalos","#fff",(g,w,h,t)=>{
-  g.fillStyle="rgba(255,255,255,.14)";g.fillRect(0,0,w,h);
-  const n=active.size,a=n?2+([...active][0]%4):2,b=n?3+Math.min(n,4):3,amp=Math.min(w,h)*.4*(.5+ecgT/200);
-  g.lineWidth=3.5;g.globalAlpha=.8;g.strokeStyle=n?COL[ecgC]:"#bbb";g.beginPath();
-  for(let i=0;i<=240;i++){const u=i/240*Math.PI*2,x=w/2+Math.sin(a*u+t*.8)*amp*1.5,y=h/2+Math.sin(b*u)*amp;i?g.lineTo(x,y):g.moveTo(x,y)}
-  g.stroke();g.globalAlpha=1;
-});
+
 function sizeEc(){EC.forEach(o=>{o.c.width=o.c.clientWidth;o.c.height=o.c.clientHeight;o.st={}})}
 sizeEc();addEventListener("resize",sizeEc);
 (function el(ms){EC.forEach(o=>o.draw(o.g,o.c.width,o.c.height,ms/1000,o.st));requestAnimationFrame(el)})(0);
@@ -888,9 +953,11 @@ $("mMid").onclick=()=>{
 
 /* PANTALLA COMPLETA: solo el escenario */
 const stage=document.querySelector(".stage"),fsb=$("fs"),IC={on:'<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',off:'<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>'};
-const fsIcon=()=>{const on=!!document.fullscreenElement;fsb.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+(on?IC.off:IC.on)+'</svg>';fsb.title=on?"Salir de pantalla completa":"Pantalla completa";fsb.setAttribute("aria-label",fsb.title)};
-fsb.onclick=async()=>{try{if(document.fullscreenElement){await document.exitFullscreen()}else{await stage.requestFullscreen()}}catch(e){log("Pantalla completa no disponible en este navegador.")}};
-if(!stage.requestFullscreen)fsb.style.display="none";
+const fsIcon=()=>{const on=!!document.fullscreenElement;fsb.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+(on?IC.off:IC.on)+'</svg>';fsb.title=on?"Salir de pantalla completa (F11)":"Pantalla completa (F11)";fsb.setAttribute("aria-label",fsb.title)};
+// El botón usa la Fullscreen API sobre toda la página, equivalente al modo F11.
+// No se puede enviar la tecla F11 real por JavaScript por seguridad del navegador.
+fsb.onclick=async()=>{try{if(document.fullscreenElement){await document.exitFullscreen()}else{await document.documentElement.requestFullscreen()}}catch(e){log("Pantalla completa no disponible en este navegador.")}};
+if(!document.documentElement.requestFullscreen)fsb.style.display="none";
 document.addEventListener("fullscreenchange",()=>{fsIcon();sizeEc();dispatchEvent(new Event("resize"))});
 fsIcon();
 
