@@ -225,20 +225,6 @@ body.app-fs #fs{position:fixed!important;top:10px!important;right:10px!important
   <div class="status">Cinco formas de ver la misma tensión: latido, sismógrafo, osciloscopio, radar y figura de Lissajous.</div>
 </section>
 
-<section class="card">
-  <h2>Melodía para violín</h2>
-  <div class="controls mctl">
-    <button id="mGen" class="btn dark">Generar melodía</button>
-    <button id="mPlay" class="btn">▶ Tocar</button>
-    <button id="mClear" class="btn">Borrar</button>
-    <button id="mMid" class="btn">⬇ Descargar .mid</button>
-    <label>♩ = <input type="number" id="bpm" value="100" min="50" max="200" onchange="compose()"></label>
-    <label><input type="checkbox" id="live" checked> Escribir mientras suena</label>
-  </div>
-  <div id="scoreWrap"><div id="scoreIn" style="position:relative;width:max-content;min-width:100%"><canvas id="score" height="170" style="width:auto;height:170px"></canvas><div id="ph"></div></div></div>
-  <div class="status">Transcribe la línea melódica dominante al registro del violín, con silencios, nombres de nota, cursor de reproducción y exportación .mid. Sin audio, compone sobre los acordes que tocás.</div>
-</section>
-</main>
 
 <script>
 const $=id=>document.getElementById(id);
