@@ -958,7 +958,7 @@ const rack=(()=>{
     const t=ms/1000;tc+=(ten-tc)*.08;const rgb=FC[fkey(fn)],pad=38,gap=12,mw=(W-pad*2-gap*3)/4,my=14,mh=H-28,jy=H-62;
     g.fillStyle="#f6f1e4";g.fillRect(0,0,W,H);
     [0,W-26].forEach(x=>{const gr=g.createLinearGradient(x,0,x+26,0);gr.addColorStop(0,"#b9763c");gr.addColorStop(.5,"#e6aa6c");gr.addColorStop(1,"#a8652f");g.fillStyle=gr;g.fillRect(x,0,26,H);g.strokeStyle=INK;g.lineWidth=4;g.strokeRect(x,0,26,H);g.lineWidth=1.5;for(let y=14;y<H;y+=26){g.beginPath();g.moveTo(x+4,y);g.bezierCurveTo(x+10,y+6,x+16,y-6,x+22,y);g.stroke()}});
-    const T=["SEQ · 12","VCF · FILTRO","LFO · MODULADOR","ENV · ADSR"],tint=["0,255,110","255,138,0","255,22,84","43,123,255"],X=i=>pad+i*(mw+gap);
+    const T=["SEQ · 12"],tint=["0,255,110","255,138,0","255,22,84","43,123,255"],X=i=>pad+i*(mw+gap);
     T.forEach((n,i)=>{
       const x=X(i);g.fillStyle="#fff";g.strokeStyle=INK;g.lineWidth=4;g.beginPath();g.roundRect(x,my,mw,mh,16);g.fill();g.stroke();
       g.fillStyle="rgba("+tint[i]+",.45)";g.beginPath();g.roundRect(x+4,my+4,mw-8,30,12);g.fill();
