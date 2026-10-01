@@ -8,6 +8,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{display:["Unbounded","sans-serif"],body:["Space Grotesk","sans-serif"]},boxShadow:{ink:"8px 8px 0 #050507"}}}}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 <style>
 :root{--pk:#ff2bd1;--pk2:#ff9bea;--k:#050507;--vi:#7b4dff;--rd:#ff1654;--yl:#ffd400;--gn:#00e08a;--bl:#2b7bff}
 *{box-sizing:border-box}
@@ -89,6 +90,13 @@ canvas{display:block;width:100%;height:100%;image-rendering:auto}
 .fsbtn{position:fixed;top:12px;right:14px;z-index:30;width:46px;height:46px;border:3px solid var(--k);border-radius:14px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s}
 .fsbtn:hover{background:linear-gradient(135deg,var(--pk2),var(--pk))}
 header{padding-right:74px}
+.yt-player{position:absolute;inset:0;background:#000}
+.yt-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;z-index:1;background:linear-gradient(135deg,#fff,var(--pk2));font-weight:600;text-align:center}
+.yt-controls{position:absolute;left:12px;right:12px;bottom:12px;z-index:4;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px;border:2px solid var(--k);border-radius:16px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);box-shadow:4px 4px 0 var(--k)}
+.yt-controls .btn{padding:7px 11px;font-size:11px;border-width:2px}
+.yt-pill{margin-left:auto;border:2px solid var(--k);border-radius:999px;padding:5px 10px;font:700 10px "Space Grotesk",sans-serif;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#fff}
+.yt-controls[hidden],.yt-empty[hidden]{display:none}
+@media(max-width:820px){.yt-controls{bottom:8px;left:8px;right:8px}.yt-pill{max-width:100%;width:100%;margin-left:0}}
 
 .card h2{display:flex;align-items:center;gap:10px}
 .card h2::before{content:"";flex:none;width:34px;height:22px;background:radial-gradient(circle at 30% 55%,rgba(0,255,110,.7) 0 9px,transparent 10px),radial-gradient(circle at 70% 55%,rgba(255,22,84,.65) 0 9px,transparent 10px),radial-gradient(circle at 50% 30%,rgba(255,138,0,.7) 0 9px,transparent 10px);background-blend-mode:multiply}
@@ -127,14 +135,23 @@ header{padding-right:74px}
   <div class="lens l1"></div><div class="lens l2"></div><div class="bridge"></div>
   <canvas id="gl"></canvas>
   <div class="top flex items-center gap-2 flex-wrap">
-    <input id="youtube" class="shadow-sm" placeholder="① Pegá acá el link de YouTube…" aria-label="Link de YouTube">
-    <button id="youtubeButton" class="btn dark" aria-label="Cargar video de YouTube">Cargar video</button>
+    <input id="youtube" class="shadow-sm" placeholder="① Pegá un video o una playlist de YouTube…" aria-label="Link de YouTube o playlist">
+    <button id="youtubeButton" class="btn dark" aria-label="Cargar video o playlist de YouTube">Cargar</button>
     <button id="capture" class="btn" aria-label="Analizar audio de la pestaña">② Analizar audio</button>
     <button id="demo" class="btn">▶ Demo</button>
     <span class="badge-live"><i></i> análisis en vivo</span>
   </div>
   <div class="stage-grid"></div>
-  <div class="video" id="video">Pegá un link arriba, tocá «Cargar video», dale play y después «Analizar audio».</div>
+  <div class="video" id="video">
+    <div id="ytPlayer" class="yt-player"></div>
+    <div id="ytEmpty" class="yt-empty">Pegá un link de <b>YouTube</b> — video o playlist — y tocá «Cargar».</div>
+    <div id="ytControls" class="yt-controls" hidden>
+      <button id="ytPrev" class="btn" type="button" aria-label="Video anterior">← Anterior</button>
+      <button id="ytPlay" class="btn dark" type="button" aria-label="Reproducir o pausar">▶ Play</button>
+      <button id="ytNext" class="btn" type="button" aria-label="Siguiente video">Siguiente →</button>
+      <span id="ytInfo" class="yt-pill">Sin playlist</span>
+    </div>
+  </div>
   <div class="hud">
     <div><div id="currentNote" class="big">—</div><div id="currentChord" class="chord">SIN SEÑAL</div><div id="currentFunction" class="fn">ESPERANDO NOTAS</div><div id="meaning" class="mean"></div></div>
     <div class="tn">
@@ -144,7 +161,7 @@ header{padding-right:74px}
     </div>
   </div>
 </section>
-<div id="youtubeStatus" class="status"><b>Modo automático:</b> la tonalidad se estima a partir del audio y se actualiza cuando hay evidencia suficiente.<br>Funciona en Chrome o Edge. Al analizar, elegí <b>esta pestaña</b> y activá <b>compartir audio</b>.</div>
+<div id="youtubeStatus" class="status"><b>Modo automático:</b> la tonalidad se estima a partir del audio y se actualiza cuando hay evidencia suficiente.<br>Podés pegar un video o una <b>playlist de YouTube</b>; con una playlist aparecen controles para pasar al tema anterior/siguiente. Para analizarla, reproducí el tema y tocá «② Analizar audio».</div>
 <div id="logline" class="status"></div>
 
 
@@ -408,21 +425,114 @@ async function initMIDI(){
   }catch(err){log("No se pudo iniciar MIDI: "+err.message)}
 }
 
-/* YOUTUBE (video en el centro del escenario) */
-$("youtubeButton").onclick=()=>{
-  const st=$("youtubeStatus"),url=$("youtube").value.trim();
-  if(!url){st.textContent="Pegá un enlace primero.";return}
-  let id=null;
+/* YOUTUBE: videos + playlists, con controles de navegación */
+let ytPlayer=null, ytMode="video", ytPlaylistId="", ytLastState=-1;
+let ytApiResolve;
+const ytApiReady=new Promise(resolve=>{ytApiResolve=resolve});
+window.onYouTubeIframeAPIReady=()=>ytApiResolve();
+
+function ytMsg(msg,ok=false){
+  const st=$("youtubeStatus");
+  st.innerHTML=(ok?"✅ ":"")+msg;
+}
+
+function parseYouTube(raw){
   try{
-    const u=new URL(url);
-    if(u.hostname.includes("youtu.be"))id=u.pathname.slice(1);
-    else if(u.hostname.includes("youtube.com")){id=u.searchParams.get("v");if(!id){const m=u.pathname.match(/^\/(?:shorts|embed|live)\/([^/?]+)/);if(m)id=m[1]}}
+    const u=new URL(raw);
+    const host=u.hostname.replace(/^www\./,"").toLowerCase();
+    if(host==="youtu.be"){
+      const id=u.pathname.split("/").filter(Boolean)[0]||null;
+      return {videoId:id,playlistId:u.searchParams.get("list")||""};
+    }
+    if(host.endsWith("youtube.com")){
+      const videoId=u.searchParams.get("v")||((u.pathname.match(/^\/(?:shorts|embed|live)\/([^/?]+)/)||[])[1]||null);
+      return {videoId,playlistId:u.searchParams.get("list")||""};
+    }
   }catch(_){}
-  if(!id||!/^[\w-]{11}$/.test(id)){st.textContent="No pude reconocer ese enlace.";return}
-  $("video").innerHTML='<iframe src="https://www.youtube.com/embed/'+id+'" referrerpolicy="strict-origin-when-cross-origin" allow="encrypted-media;picture-in-picture" allowfullscreen></iframe>';
-  st.innerHTML='✅ Video cargado: <b>'+id+'</b>. Dale play y tocá «② Analizar audio» (elegí esta pestaña y activá compartir audio).'+(location.protocol==="file:"?'<br><b style="color:var(--rd)">⚠ Abriste el archivo directo (file://): YouTube bloquea el reproductor (error 153). Abrilo con Live Server o un servidor local, o <a href="https://youtu.be/'+id+'" target="_blank" rel="noopener">abrí el video en YouTube</a> y compartí esa pestaña.</b>':'');
-  log("YouTube → "+id);
+  return {videoId:null,playlistId:""};
+}
+
+function validYTVideo(id){return !!id&&/^[\w-]{11}$/.test(id)}
+function validYTPlaylist(id){return !!id&&/^[\w-]{10,}$/.test(id)}
+
+async function ensureYTPlayer(){
+  if(ytPlayer)return ytPlayer;
+  if(!window.YT||!window.YT.Player)await ytApiReady;
+  return await new Promise(resolve=>{
+    ytPlayer=new YT.Player("ytPlayer",{
+      width:"100%",height:"100%",
+      playerVars:{playsinline:1,rel:0,modestbranding:1,iv_load_policy:3},
+      events:{
+        onReady:e=>{ $("ytEmpty").hidden=true; resolve(e.target); },
+        onStateChange:onYTState,
+        onError:e=>{ytMsg("YouTube devolvió un error ("+e.data+"). Probá con otro video o playlist.");log("YouTube error → "+e.data)}
+      }
+    });
+  });
+}
+
+function ytCurrentInfo(){
+  if(!ytPlayer)return;
+  const list=typeof ytPlayer.getPlaylist==="function"?ytPlayer.getPlaylist()||[]:[];
+  const idx=typeof ytPlayer.getPlaylistIndex==="function"?ytPlayer.getPlaylistIndex():-1;
+  const title=typeof ytPlayer.getVideoData==="function"?(ytPlayer.getVideoData().title||"YouTube"):"YouTube";
+  $("ytInfo").textContent=list.length?(("Tema "+(idx+1)+" / "+list.length)+" · "+title):title;
+  $("ytPrev").disabled=!list.length;
+  $("ytNext").disabled=!list.length;
+}
+
+function onYTState(e){
+  ytLastState=e.data;
+  ytCurrentInfo();
+  if(e.data===YT.PlayerState.PLAYING)log(ytMode==="playlist"?"Playlist → reproduciendo":"YouTube → reproduciendo");
+}
+
+async function loadYouTube(){
+  const raw=$("youtube").value.trim();
+  if(!raw){ytMsg("Pegá un enlace de YouTube primero.");return}
+  const {videoId,playlistId}=parseYouTube(raw);
+  if(!validYTVideo(videoId)&&!validYTPlaylist(playlistId)){
+    ytMsg("No pude reconocer el enlace. Pegá un video de YouTube o una URL que contenga <b>list=...</b>.");
+    return;
+  }
+  const p=await ensureYTPlayer();
+  $("ytControls").hidden=false;
+  ytMode=validYTPlaylist(playlistId)?"playlist":"video";
+  ytPlaylistId=playlistId||"";
+  $("ytPlay").textContent="▶ Play";
+  if(validYTPlaylist(playlistId)){
+    // Si el link trae también un video, intentamos arrancar desde ese video;
+    // si no, YouTube comienza por el primer elemento de la playlist.
+    if(validYTVideo(videoId)){
+      p.loadVideoById(videoId);
+      setTimeout(()=>{try{p.loadPlaylist({list:playlistId})}catch(_){p.loadVideoById(videoId)}},250);
+    }else{
+      p.loadPlaylist({list:playlistId});
+    }
+    ytMsg('Playlist cargada. Usá <b>Anterior</b>/<b>Siguiente</b> para recorrerla y compartí el audio de esta pestaña para analizar cada tema.',true);
+    log("YouTube playlist → "+playlistId);
+  }else{
+    p.loadVideoById(videoId);
+    ytMsg('Video cargado: <b>'+videoId+'</b>. Dale play y tocá «② Analizar audio».',true);
+    log("YouTube → "+videoId);
+  }
+  ytCurrentInfo();
+  if(location.protocol==="file:"){
+    $("youtubeStatus").innerHTML+=' <br><b style="color:var(--rd)">⚠ Estás abriendo el HTML con file://. Para evitar errores del reproductor, usalo con Live Server o un servidor local.</b>';
+  }
+}
+
+$("youtubeButton").onclick=loadYouTube;
+$("youtube").addEventListener("keydown",e=>{if(e.key==="Enter")loadYouTube()});
+$("ytPrev").onclick=()=>{try{ytPlayer.previousVideo();ytCurrentInfo()}catch(_){}}; 
+$("ytNext").onclick=()=>{try{ytPlayer.nextVideo();ytCurrentInfo()}catch(_){}}; 
+$("ytPlay").onclick=()=>{
+  if(!ytPlayer)return;
+  const s=ytPlayer.getPlayerState();
+  if(s===YT.PlayerState.PLAYING){ytPlayer.pauseVideo();$("ytPlay").textContent="▶ Play"}
+  else{ytPlayer.playVideo();$("ytPlay").textContent="Ⅱ Pausa"}
 };
+
 $("capture").onclick=()=>capture();
 
 /* AUDIO DE LA PESTAÑA */
