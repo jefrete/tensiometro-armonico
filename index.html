@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-:root{--pk:#ff2bd1;--pk2:#ff9bea;--k:#050507;--vi:#7b4dff;--rd:#ff1654;--yl:#ffd400}
+:root{--pk:#ff2bd1;--pk2:#ff9bea;--k:#050507;--vi:#7b4dff;--rd:#ff1654;--yl:#ffd400;--gn:#00e08a;--bl:#2b7bff}
 *{box-sizing:border-box}
 body{margin:0;background:#fff;color:var(--k);font-family:"Space Grotesk",system-ui,sans-serif}
 h1,h2,.big,.chord,strong,.tn b{font-family:Unbounded,"Arial Black",sans-serif}
@@ -29,7 +29,7 @@ main{max-width:1320px;margin:0 auto;padding:0 16px 30px}
 .video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .hud{position:absolute;left:20px;right:20px;bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;pointer-events:none;z-index:3}
 .big{font-size:clamp(44px,8vw,96px);font-weight:800;line-height:.9;letter-spacing:-.05em;-webkit-text-stroke:3px var(--k);color:#fff;text-shadow:4px 4px 0 var(--pk);transition:.2s}
-.big.green-text{color:var(--pk2)}.big.blue-text{color:var(--vi)}.big.red-text{color:var(--rd)}.big.yellow-text{color:var(--yl)}
+.big.green-text{color:var(--gn)}.big.blue-text{color:var(--bl)}.big.red-text{color:var(--rd)}.big.yellow-text{color:var(--yl)}
 .chord{font-size:clamp(14px,2vw,24px);font-weight:800;margin-top:8px}
 .fn{font-size:12px;letter-spacing:.08em;margin-top:3px}
 .tn{min-width:min(240px,45%);text-align:right}
@@ -66,16 +66,28 @@ canvas{display:block;width:100%;height:100%}
 .ecg{height:180px;border:3px solid var(--k);border-radius:20px;overflow:hidden;background:linear-gradient(#ffe3f8 1px,transparent 1px),linear-gradient(90deg,#ffe3f8 1px,transparent 1px);background-size:30px 30px}
 .history{display:flex;align-items:flex-end;height:80px;gap:4px;overflow-x:auto}
 .history-item{min-width:12px;border:2px solid var(--k);border-radius:8px 8px 0 0}
-.green{background:var(--pk2)}.blue{background:var(--vi)}.red{background:var(--rd)}.yellow{background:var(--yl)}
+.green{background:var(--gn)}.blue{background:var(--bl)}.red{background:var(--rd)}.yellow{background:var(--yl)}
 .log{background:var(--k);color:var(--pk2);height:130px;overflow:auto;padding:12px;border-radius:18px;font:12px Consolas,monospace}
 #scoreWrap{overflow-x:auto;margin-top:12px;border:3px solid var(--k);border-radius:20px;background:#fff}
 .mctl input[type=number]{width:70px}.mctl input[type=checkbox]{width:auto}
+.tnrow{display:flex;justify-content:flex-end;align-items:center;gap:10px;flex-wrap:wrap}
+.tnrow small{font-size:12px}
+.tbadge{border:3px solid var(--k);border-radius:999px;padding:5px 13px;font:800 12px Unbounded,sans-serif;background:#fff;color:var(--k)}
+.tbadge.blue,.tbadge.red{color:#fff}
+.tleg{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tleg span{display:inline-flex;align-items:center;gap:5px;border:2px solid var(--k);border-radius:999px;padding:2px 10px 2px 5px;font-size:11px;font-weight:600;background:#fff;opacity:.55;transition:.2s}
+.tleg span.on{opacity:1;box-shadow:3px 3px 0 var(--k);transform:translateY(-2px)}
+.tleg i{display:inline-block;width:13px;height:13px;border:2px solid var(--k);border-radius:50%}
+.fsbtn{position:fixed;top:12px;right:14px;z-index:30;width:46px;height:46px;border:3px solid var(--k);border-radius:14px;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;transition:.15s}
+.fsbtn:hover{background:linear-gradient(135deg,var(--pk2),var(--pk))}
+header{padding-right:74px}
 </style>
 </head>
 <body>
 <header>
   <h1>TENSIÓMETRO <span>DE ARMONÍA</span></h1>
   <div class="sub">tensión musical · notas · intervalos · funciones · MIDI</div>
+  <button id="fs" class="fsbtn" title="Pantalla completa" aria-label="Pantalla completa"></button>
 </header>
 <main>
 
@@ -89,7 +101,11 @@ canvas{display:block;width:100%;height:100%}
   <div class="video" id="video">Pegá un link arriba, tocá «Cargar video», dale play y después «Analizar audio».</div>
   <div class="hud">
     <div><div id="currentNote" class="big">—</div><div id="currentChord" class="chord">SIN SEÑAL</div><div id="currentFunction" class="fn">ESPERANDO NOTAS</div><div id="meaning" class="mean"></div></div>
-    <div class="tn">tensión <b id="tension">0%</b><div class="track"><div id="meter" class="meter-fill"></div></div></div>
+    <div class="tn">
+      <div class="tnrow"><small>tensión</small><b id="tension">0%</b><span id="tfn" class="tbadge">—</span></div>
+      <div class="track"><div id="meter" class="meter-fill"></div></div>
+      <div class="tleg" id="tleg"><span data-c="green"><i class="green"></i>reposo</span><span data-c="blue"><i class="blue"></i>movimiento</span><span data-c="red"><i class="red"></i>tensión</span><span data-c="yellow"><i class="yellow"></i>cromático</span></div>
+    </div>
   </div>
 </section>
 <div id="youtubeStatus" class="status">Funciona en Chrome o Edge. Al analizar, elegí <b>esta pestaña</b> y activá <b>compartir audio</b>.</div>
@@ -164,7 +180,7 @@ canvas{display:block;width:100%;height:100%}
 <div class="g2">
   <section class="card"><h2>Electrocardiograma armónico</h2><div class="ecg"><canvas id="ecg"></canvas></div></section>
   <section class="card"><h2>Historial de tensión</h2><div id="history" class="history"></div>
-    <div class="status"><b style="color:var(--pk)">●</b> tónica · <b style="color:var(--vi)">●</b> subdominante · <b style="color:var(--rd)">●</b> dominante · <b style="color:#c9a800">●</b> cromático</div>
+    <div class="status"><b style="color:var(--gn)">●</b> tónica · <b style="color:var(--bl)">●</b> subdominante · <b style="color:var(--rd)">●</b> dominante · <b style="color:#c9a800">●</b> cromático</div>
   </section>
 </div>
 
@@ -180,7 +196,7 @@ const CH=[["",[0,4,7]],["m",[0,3,7]],["7",[0,4,7,10]],["m7",[0,3,7,10]],["maj7",
 const MINQ=["m","m7","dim","°7","m7♭5"];
 const FUNC=["TÓNICA","SUBDOMINANTE","TÓNICA","SUBDOMINANTE","DOMINANTE","TÓNICA","DOMINANTE"];
 const BASE={"TÓNICA":5,"SUBDOMINANTE":35,"DOMINANTE":65};
-const COL={green:"#ff2bd1",blue:"#7b4dff",red:"#ff1654",yellow:"#d9b800"};
+const COL={green:"#00e08a",blue:"#2b7bff",red:"#ff1654",yellow:"#d9b800",pink:"#ff2bd1"};
 const ROMAN=["I","II","III","IV","V","VI","VII"];
 const INK="#050507";
 const FMEAN={"TÓNICA":"Reposo: la música se siente en casa y nada pide moverse.","SUBDOMINANTE":"Salida: se aleja de casa y abre el movimiento.","DOMINANTE":"Tirón: pide volver a la tónica, máxima atracción.","DOMINANTE SECUNDARIA":"Desvío: tira hacia otro acorde, no hacia casa.","CROMÁTICO":"Color inestable: notas fuera de la tonalidad."};
@@ -236,7 +252,7 @@ function analyze(){
   $("currentChord").textContent=c.name;$("currentFunction").textContent=fn;$("meaning").textContent=FMEAN[fn]||"";
   $("degree").textContent=deg;$("function").textContent=fn;$("fundamental").textContent=NOTES[c.root];
   $("notes").textContent=notes.map(n=>NOTES[n%12]).join(" · ");$("midi").textContent=notes.join(", ");
-  $("intervalCount").textContent=notes.length;$("tension").textContent=t+"%";$("meter").style.width=t+"%";
+  $("intervalCount").textContent=notes.length;$("tension").textContent=t+"%";$("meter").style.width=t+"%";$("meter").className="meter-fill "+col;$("tfn").textContent=NOTES[c.root]+" · "+fn;$("tfn").className="tbadge "+col;document.querySelectorAll("#tleg span").forEach(e=>e.classList.toggle("on",e.dataset.c===col));
   showIntervals(notes);addHistory(t,col);onChord(c.name,pcs);
   ecgT=t;ecgC=col;viz.set(t/100,pcs,c.root,fn);fmap.set(fn,t);
 }
@@ -253,7 +269,7 @@ function reset(){
   $("currentNote").textContent="—";$("currentNote").className="big";
   $("currentChord").textContent="SIN SEÑAL";$("currentFunction").textContent="ESPERANDO NOTAS";$("meaning").textContent="";
   ["degree","function","fundamental","notes","midi","intervalCount"].forEach(i=>$(i).textContent="—");
-  $("tension").textContent="0%";$("meter").style.width="0%";
+  $("tension").textContent="0%";$("meter").style.width="0%";$("meter").className="meter-fill";$("tfn").textContent="—";$("tfn").className="tbadge";document.querySelectorAll("#tleg span").forEach(e=>e.classList.remove("on"));
   $("intervals").innerHTML='<div class="interval">Esperando notas...</div>';ecgT=0;viz.set(0,[],-1,null);fmap.set(null,0);
 }
 
@@ -384,7 +400,7 @@ function drawSpec(){
     for(let x=0;x<w;x+=4){
       const f=Math.exp(lo+x/w*(hi-lo)),v=Math.max(0,Math.min(1,(sd[Math.round(f/hz)]+100)/70));
       const pc=((Math.round(69+12*Math.log2(f/440))%12)+12)%12;
-      sx.fillStyle=pc===root?INK:COL.green;sx.fillRect(x,h-v*h,3,v*h);
+      sx.fillStyle=pc===root?INK:COL.pink;sx.fillRect(x,h-v*h,3,v*h);
     }
   }
   sx.font="11px Arial";sx.textAlign="left";
@@ -393,7 +409,7 @@ function drawSpec(){
   cx.clearRect(0,0,cw,chh);cx.font="11px Arial";cx.textAlign="center";
   for(let p=0;p<12;p++){
     const v=kc[p]/top;
-    cx.fillStyle=p===root&&autoKey?INK:COL.green;cx.fillRect(p*bw+2,bh-v*bh+4,bw-4,v*bh);
+    cx.fillStyle=p===root&&autoKey?INK:COL.pink;cx.fillRect(p*bw+2,bh-v*bh+4,bw-4,v*bh);
     cx.fillStyle="#555";cx.fillText(NOTES[p],p*bw+bw/2,chh-4);
   }
   requestAnimationFrame(drawSpec);
@@ -491,7 +507,7 @@ function drawScore(scroll){
   if(!bars.length){sg.fillStyle="#777";sg.font="13px Arial";sg.fillText("La melodía aparece acá a medida que se detectan acordes.",90,top+24);return}
   const L=[0,0,1,1,2,3,3,4,4,5,5,6],step=m=>(Math.floor(m/12)-1)*7+L[m%12],Y=st=>top+40-(st-30)*5;
   bars.forEach((b,bi)=>{
-    const x0=60+bi*bw;sg.fillStyle=COL.green;sg.font="bold 13px Arial";sg.fillText(b.name,x0+8,top-22);
+    const x0=60+bi*bw;sg.fillStyle=COL.pink;sg.font="bold 13px Arial";sg.fillText(b.name,x0+8,top-22);
     let beat=0;
     b.notes.forEach(n=>{
       const mm=fm(n.m),x=x0+22+beat*U,st=step(mm),y=Y(st);
@@ -588,7 +604,7 @@ const viz=(()=>{
   const ol=new THREE.Mesh(new THREE.SphereGeometry(1.5,48,48),BKB);ol.scale.setScalar(1.07);G.add(orb,ol);
   const RR=4.3,hex=(r,t,m)=>{const x=new THREE.Mesh(new THREE.TorusGeometry(r,t,12,6),m);x.rotation.z=Math.PI/6;G.add(x);return x};
   const hA=hex(RR,.09,BK),hB=hex(RR*1.24,.03,BK),hC=hex(RR*.62,.05,PKM);
-  const home=new THREE.Mesh(new THREE.CircleGeometry(RR*.62,6),new THREE.MeshBasicMaterial({color:0xff9bea,transparent:true,opacity:.1}));home.rotation.z=Math.PI/6;home.position.z=-.2;G.add(home);
+  const home=new THREE.Mesh(new THREE.CircleGeometry(RR*.62,6),new THREE.MeshBasicMaterial({color:0x00e08a,transparent:true,opacity:.1}));home.rotation.z=Math.PI/6;home.position.z=-.2;G.add(home);
   const nodes=[];
   const label=txt=>{const c=document.createElement("canvas");c.width=c.height=128;const x=c.getContext("2d");x.font="800 56px Unbounded,Arial Black,sans-serif";x.textAlign="center";x.textBaseline="middle";x.fillStyle="#050507";x.fillText(txt,64,68);return new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true}))};
   for(let p=0;p<12;p++){
@@ -606,7 +622,7 @@ const viz=(()=>{
   const tonic=new THREE.Mesh(new THREE.TorusGeometry(.66,.07,12,48),PKM);tonic.visible=false;G.add(tonic);
   const web=new THREE.Group(),pull=new THREE.Group();G.add(web,pull);
   const pullMat=new THREE.MeshBasicMaterial({color:0xff1654,transparent:true});
-  const ripples=[],RC={T:0xff9bea,S:0x7b4dff,D:0xff1654,C:0xd9b800,I:0xff2bd1};
+  const ripples=[],RC={T:0x00e08a,S:0x2b7bff,D:0xff1654,C:0xd9b800,I:0xff2bd1};
   const PAR={T:{spin:.12,pull:0,spike:0,home:.4},S:{spin:1.1,pull:.05,spike:0,home:.1},D:{spin:-1.9,pull:.32,spike:1,home:.05},C:{spin:2.6,pull:.12,spike:.45,home:.05},I:{spin:.1,pull:0,spike:0,home:.1}};
   let tT=0,tC=0,mx=0,my=0,k="I",cur={spin:.1,pull:0,spike:0,home:.1};
   addEventListener("pointermove",e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5});
@@ -656,7 +672,7 @@ const viz=(()=>{
 /* MAPA DE FUNCIÓN: T → S → D → T */
 const fmap=(()=>{
   const c=$("fmap"),g=c.getContext("2d");let W=0,H=0,cur=null,ten=0,ball=null,trail=[];
-  const D={T:{n:"TÓNICA",s:"casa",c:"#ff9bea"},S:{n:"SUBDOM.",s:"viaje",c:"#7b4dff"},D:{n:"DOMINANTE",s:"tirón",c:"#ff1654"}};
+  const D={T:{n:"TÓNICA",s:"casa",c:"#00e08a"},S:{n:"SUBDOM.",s:"viaje",c:"#2b7bff"},D:{n:"DOMINANTE",s:"tirón",c:"#ff1654"}};
   const size=()=>{W=c.width=c.clientWidth;H=c.height=c.clientHeight;ball=null;trail=[]};
   size();addEventListener("resize",size);
   const P=()=>({T:{x:W*.2,y:H*.6},S:{x:W*.5,y:H*.24},D:{x:W*.8,y:H*.6},C:{x:W*.5,y:H*.87}});
@@ -687,6 +703,14 @@ const fmap=(()=>{
   function set(fn,t){cur=fn?fkey(fn):null;ten=t;document.querySelectorAll("#fleg .fi").forEach(e=>e.classList.toggle("on",e.dataset.k===cur))}
   return{set};
 })();
+
+/* PANTALLA COMPLETA */
+const fsb=$("fs"),IC={on:'<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',off:'<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>'};
+const fsIcon=()=>{fsb.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#050507" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+(document.fullscreenElement?IC.off:IC.on)+'</svg>';fsb.title=document.fullscreenElement?"Salir de pantalla completa":"Pantalla completa"};
+fsb.onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){log("Pantalla completa no disponible en este navegador.")}};
+if(!document.documentElement.requestFullscreen)fsb.style.display="none";
+document.addEventListener("fullscreenchange",()=>{fsIcon();dispatchEvent(new Event("resize"))});
+fsIcon();
 
 /* ARRANQUE */
 createPiano();updateTonality();initMIDI();ecgLoop();drawSpec();drawScore();
