@@ -3,2086 +3,449 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-
 <title>Tensiómetro de Armonía</title>
-
 <style>
-*{
-    box-sizing:border-box;
-}
-
-body{
-    margin:0;
-    background:#07090d;
-    color:#e8e8e8;
-    font-family:Arial,Helvetica,sans-serif;
-}
-
-header{
-    padding:25px;
-    border-bottom:1px solid #242832;
-    background:#0c0f15;
-}
-
-h1{
-    margin:0;
-    font-size:27px;
-    letter-spacing:3px;
-}
-
-.subtitle{
-    margin-top:7px;
-    color:#777;
-    font-size:13px;
-}
-
-main{
-    max-width:1400px;
-    margin:auto;
-    padding:20px;
-}
-
-.panel{
-    background:#10131a;
-    border:1px solid #252a35;
-    border-radius:14px;
-    padding:20px;
-    margin-bottom:18px;
-}
-
-h2,h3{
-    margin-top:0;
-}
-
-/* CONTROLES */
-
-.controls{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr auto;
-    gap:10px;
-}
-
-select,input,button{
-    width:100%;
-    padding:12px;
-    border-radius:8px;
-    border:1px solid #363c49;
-    background:#171b24;
-    color:white;
-}
-
-button{
-    cursor:pointer;
-    font-weight:bold;
-}
-
-button:hover{
-    background:#242a36;
-}
-
-/* MEDIDOR */
-
-.monitor{
-    display:grid;
-    grid-template-columns:1fr 330px;
-    gap:25px;
-}
-
-.current{
-    min-height:300px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-}
-
-.current-note{
-    font-size:90px;
-    font-weight:bold;
-    transition:.2s;
-}
-
-.current-chord{
-    font-size:30px;
-    font-weight:bold;
-    margin-top:5px;
-}
-
-.function{
-    margin-top:10px;
-    font-size:18px;
-    letter-spacing:2px;
-}
-
-.tension-number{
-    margin-top:30px;
-    font-size:20px;
-}
-
-.meter{
-    width:90%;
-    height:25px;
-    background:#20242d;
-    border-radius:20px;
-    overflow:hidden;
-    margin-top:10px;
-}
-
-.meter-fill{
-    width:0%;
-    height:100%;
-    transition:.2s;
-}
-
-/* COLORES */
-
-.green{
-    background:#18d66b;
-}
-
-.blue{
-    background:#287cff;
-}
-
-.red{
-    background:#ff3048;
-}
-
-.yellow{
-    background:#e3d33e;
-}
-
-.green-text{
-    color:#18d66b;
-}
-
-.blue-text{
-    color:#287cff;
-}
-
-.red-text{
-    color:#ff3048;
-}
-
-.yellow-text{
-    color:#e3d33e;
-}
-
-/* DATOS */
-
-.data{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-}
-
-.data-box{
-    padding:15px;
-    border-radius:9px;
-    background:#171b23;
-}
-
-.data-box span{
-    display:block;
-    color:#777;
-    font-size:12px;
-}
-
-.data-box strong{
-    display:block;
-    font-size:22px;
-    margin-top:5px;
-}
-
-/* INTERVALOS */
-
-.intervals{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-}
-
-.interval{
-    padding:10px 14px;
-    background:#181c25;
-    border:1px solid #303642;
-    border-radius:8px;
-}
-
-/* PIANO */
-
-.piano-wrapper{
-    overflow-x:auto;
-}
-
-.piano{
-    position:relative;
-    height:190px;
-    width:1260px;
-    background:#050505;
-}
-
-.white{
-    position:absolute;
-    bottom:0;
-    width:45px;
-    height:180px;
-    background:#eee;
-    border:1px solid #222;
-    color:#111;
-    display:flex;
-    align-items:flex-end;
-    justify-content:center;
-    padding-bottom:9px;
-    font-size:11px;
-    cursor:pointer;
-}
-
-.white.active{
-    background:#18d66b;
-    box-shadow:0 0 30px #18d66b;
-}
-
-.black{
-    position:absolute;
-    top:0;
-    width:29px;
-    height:110px;
-    background:#111;
-    border-radius:0 0 6px 6px;
-    z-index:5;
-    cursor:pointer;
-}
-
-.black.active{
-    background:#ff3048;
-    box-shadow:0 0 25px #ff3048;
-}
-
-/* ECG */
-
-.ecg-container{
-    height:180px;
-    position:relative;
-    overflow:hidden;
-    background:
-        linear-gradient(#151923 1px,transparent 1px),
-        linear-gradient(90deg,#151923 1px,transparent 1px);
-    background-size:30px 30px;
-}
-
-canvas{
-    width:100%;
-    height:100%;
-}
-
-/* HISTORIAL */
-
-.history{
-    display:flex;
-    align-items:flex-end;
-    height:80px;
-    gap:3px;
-    overflow-x:auto;
-}
-
-.history-item{
-    min-width:12px;
-    border-radius:3px 3px 0 0;
-}
-
-/* YOUTUBE */
-
-.youtube{
-    display:grid;
-    grid-template-columns:1fr 150px;
-    gap:10px;
-}
-
-.status{
-    color:#888;
-    margin-top:10px;
-    font-size:13px;
-}
-
-/* LOG */
-
-.log{
-    background:#07090d;
-    height:130px;
-    overflow:auto;
-    padding:10px;
-    font-family:monospace;
-    font-size:12px;
-}
-
-/* RESPONSIVE */
-
-@media(max-width:850px){
-
-    .monitor{
-        grid-template-columns:1fr;
-    }
-
-    .controls{
-        grid-template-columns:1fr;
-    }
-
-    .youtube{
-        grid-template-columns:1fr;
-    }
-
-    .current-note{
-        font-size:70px;
-    }
-}
+*{box-sizing:border-box}
+body{margin:0;background:#07090d;color:#e8e8e8;font-family:Arial,Helvetica,sans-serif}
+header{padding:25px;border-bottom:1px solid #242832;background:#0c0f15}
+h1{margin:0;font-size:27px;letter-spacing:3px}
+.subtitle{margin-top:7px;color:#777;font-size:13px}
+main{max-width:1400px;margin:auto;padding:20px}
+.panel{background:#10131a;border:1px solid #252a35;border-radius:14px;padding:20px;margin-bottom:18px}
+h2,h3{margin-top:0}
+.controls{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px}
+select,input,button{width:100%;padding:12px;border-radius:8px;border:1px solid #363c49;background:#171b24;color:#fff}
+button{cursor:pointer;font-weight:bold}
+button:hover{background:#242a36}
+.monitor{display:grid;grid-template-columns:1fr 330px;gap:25px}
+.current{min-height:300px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.current-note{font-size:90px;font-weight:bold;transition:.2s}
+.current-chord{font-size:30px;font-weight:bold;margin-top:5px;text-align:center}
+.function{margin-top:10px;font-size:18px;letter-spacing:2px;text-align:center}
+.tension-number{margin-top:30px;font-size:20px}
+.meter{width:90%;height:25px;background:#20242d;border-radius:20px;overflow:hidden;margin-top:10px}
+.meter-fill{width:0%;height:100%;transition:.2s}
+.green{background:#18d66b}.blue{background:#287cff}.red{background:#ff3048}.yellow{background:#e3d33e}
+.green-text{color:#18d66b}.blue-text{color:#287cff}.red-text{color:#ff3048}.yellow-text{color:#e3d33e}
+.data{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.data-box{padding:15px;border-radius:9px;background:#171b23;min-width:0}
+.data-box span{display:block;color:#777;font-size:12px}
+.data-box strong{display:block;font-size:20px;margin-top:5px;overflow-wrap:anywhere}
+.intervals{display:flex;flex-wrap:wrap;gap:8px}
+.interval{padding:10px 14px;background:#181c25;border:1px solid #303642;border-radius:8px}
+.piano-wrapper{overflow-x:auto}
+.piano{position:relative;height:190px;width:675px;background:#050505}
+.white{position:absolute;bottom:0;width:45px;height:180px;background:#eee;border:1px solid #222;color:#111;display:flex;align-items:flex-end;justify-content:center;padding-bottom:9px;font-size:11px;cursor:pointer;user-select:none}
+.white.active{background:#18d66b;box-shadow:0 0 30px #18d66b}
+.black{position:absolute;top:0;width:29px;height:110px;background:#111;border-radius:0 0 6px 6px;z-index:5;cursor:pointer}
+.black.active{background:#ff3048;box-shadow:0 0 25px #ff3048}
+.ecg-container{height:180px;position:relative;overflow:hidden;background:linear-gradient(#151923 1px,transparent 1px),linear-gradient(90deg,#151923 1px,transparent 1px);background-size:30px 30px}
+canvas{display:block;width:100%;height:100%}
+.history{display:flex;align-items:flex-end;height:80px;gap:3px;overflow-x:auto}
+.history-item{min-width:12px;border-radius:3px 3px 0 0}
+.youtube{display:grid;grid-template-columns:1fr 150px;gap:10px}
+.status{color:#888;margin-top:10px;font-size:13px}
+.status iframe{display:block;width:100%;max-width:560px;aspect-ratio:16/9;border:0;margin-top:12px;border-radius:8px}
+.log{background:#07090d;height:130px;overflow:auto;padding:10px;font-family:monospace;font-size:12px}
+@media(max-width:850px){.monitor,.controls,.youtube{grid-template-columns:1fr}.current-note{font-size:70px}}
 </style>
 </head>
-
 <body>
-
 <header>
-
 <h1>🫀 TENSIÓMETRO DE ARMONÍA</h1>
-
-<div class="subtitle">
-    Medidor de tensión musical · notas · intervalos · funciones · MIDI
-</div>
-
+<div class="subtitle">Medidor de tensión musical · notas · intervalos · funciones · MIDI</div>
 </header>
-
 <main>
 
-<!-- CONFIGURACIÓN -->
-
 <section class="panel">
-
 <h3>🎛️ Configuración tonal</h3>
-
 <div class="controls">
-
 <select id="root">
-<option>C</option>
-<option>C#</option>
-<option>D</option>
-<option>D#</option>
-<option>E</option>
-<option>F</option>
-<option>F#</option>
-<option>G</option>
-<option>G#</option>
-<option selected>A</option>
-<option>A#</option>
-<option>B</option>
+<option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option>
+<option>F#</option><option>G</option><option>G#</option><option selected>A</option><option>A#</option><option>B</option>
 </select>
-
 <select id="mode">
-
-<option value="minor" selected>
-La menor
-</option>
-
-<option value="major">
-Mayor
-</option>
-
+<option value="minor" selected>Menor</option>
+<option value="major">Mayor</option>
 </select>
-
-<button id="apply">
-APLICAR TONALIDAD
-</button>
-
-<button id="demo">
-▶ DEMO
-</button>
-
+<button id="apply">APLICAR TONALIDAD</button>
+<button id="demo">▶ DEMO</button>
 </div>
-
-<div class="status">
-Tonalidad:
-<strong id="tonality">A menor</strong>
-</div>
-
+<div class="status">Tonalidad: <strong id="tonality">A menor</strong></div>
 </section>
 
-
-<!-- YOUTUBE -->
-
 <section class="panel">
-
 <h3>▶️ Fuente YouTube</h3>
-
 <div class="youtube">
-
-<input
-id="youtube"
-placeholder="Pegá un link de YouTube..."
->
-
-<button id="youtubeButton">
-ANALIZAR
-</button>
-
+<input id="youtube" placeholder="Pegá un link de YouTube...">
+<button id="youtubeButton">CARGAR</button>
 </div>
-
 <div id="youtubeStatus" class="status">
-
-El enlace se reconoce, pero el análisis directo del audio
-de YouTube necesita una fuente de audio accesible al navegador.
-
+El navegador no permite leer el audio de YouTube. Podés cargar el video acá y seguirlo con el piano o el MIDI.
 </div>
-
 </section>
 
-
-<!-- MONITOR -->
-
 <section class="panel">
-
 <div class="monitor">
-
 <div class="current">
-
-<div
-id="currentNote"
-class="current-note">
-—
+<div id="currentNote" class="current-note">—</div>
+<div id="currentChord" class="current-chord">SIN SEÑAL</div>
+<div id="currentFunction" class="function">ESPERANDO NOTAS</div>
+<div class="tension-number">TENSIÓN: <strong id="tension">0%</strong></div>
+<div class="meter"><div id="meter" class="meter-fill"></div></div>
 </div>
-
-<div
-id="currentChord"
-class="current-chord">
-SIN SEÑAL
-</div>
-
-<div
-id="currentFunction"
-class="function">
-ESPERANDO NOTAS
-</div>
-
-<div class="tension-number">
-
-TENSIÓN:
-<strong id="tension">
-0%
-</strong>
-
-</div>
-
-<div class="meter">
-
-<div
-id="meter"
-class="meter-fill">
-</div>
-
-</div>
-
-</div>
-
-
 <div class="data">
-
-<div class="data-box">
-
-<span>GRADO</span>
-
-<strong id="degree">
-—
-</strong>
-
+<div class="data-box"><span>GRADO</span><strong id="degree">—</strong></div>
+<div class="data-box"><span>FUNCIÓN</span><strong id="function">—</strong></div>
+<div class="data-box"><span>FUNDAMENTAL</span><strong id="fundamental">—</strong></div>
+<div class="data-box"><span>NOTAS</span><strong id="notes">—</strong></div>
+<div class="data-box"><span>MIDI</span><strong id="midi">—</strong></div>
+<div class="data-box"><span>CANTIDAD DE NOTAS</span><strong id="intervalCount">—</strong></div>
 </div>
-
-<div class="data-box">
-
-<span>FUNCIÓN</span>
-
-<strong id="function">
-—
-</strong>
-
 </div>
-
-<div class="data-box">
-
-<span>FUNDAMENTAL</span>
-
-<strong id="fundamental">
-—
-</strong>
-
-</div>
-
-<div class="data-box">
-
-<span>NOTAS</span>
-
-<strong id="notes">
-—
-</strong>
-
-</div>
-
-<div class="data-box">
-
-<span>MIDI</span>
-
-<strong id="midi">
-—
-</strong>
-
-</div>
-
-<div class="data-box">
-
-<span>INTERVALOS</span>
-
-<strong id="intervalCount">
-—
-</strong>
-
-</div>
-
-</div>
-
-</div>
-
 </section>
 
-
-<!-- INTERVALOS -->
-
 <section class="panel">
-
 <h3>📐 Espectro de intervalos</h3>
-
-<div
-id="intervals"
-class="intervals">
-
-<div class="interval">
-Esperando notas...
-</div>
-
-</div>
-
+<div id="intervals" class="intervals"><div class="interval">Esperando notas...</div></div>
 </section>
 
-
-<!-- PIANO -->
-
 <section class="panel">
-
 <h3>🎹 Piano MIDI / teclado</h3>
-
-<div class="piano-wrapper">
-
-<div
-id="piano"
-class="piano">
-</div>
-
-</div>
-
-<div class="status">
-
-También podés usar el teclado de la PC:
-A S D F G H J K
-
-</div>
-
+<div class="piano-wrapper"><div id="piano" class="piano"></div></div>
+<div class="status">También podés usar el teclado de la PC: A S D F G H J K (blancas) · W E T Y U (negras)</div>
+<button id="clear" style="width:auto;margin-top:10px">LIMPIAR NOTAS</button>
 </section>
 
-
-<!-- ECG -->
-
 <section class="panel">
-
 <h3>📈 Electrocardiograma armónico</h3>
-
-<div class="ecg-container">
-
-<canvas id="ecg"></canvas>
-
-</div>
-
+<div class="ecg-container"><canvas id="ecg"></canvas></div>
 </section>
 
-
-<!-- HISTORIAL -->
-
 <section class="panel">
-
 <h3>🌈 Historial de tensión</h3>
-
-<div
-id="history"
-class="history">
-</div>
-
-<div class="status">
-
-🟢 Tónica · 🔵 Subdominante / movimiento ·
-🔴 Dominante / máxima tensión · 🟡 cromático
-
-</div>
-
+<div id="history" class="history"></div>
+<div class="status">🟢 Tónica · 🔵 Subdominante / movimiento · 🔴 Dominante / máxima tensión · 🟡 cromático</div>
 </section>
 
-
-<!-- MIDI -->
-
 <section class="panel">
-
 <h3>📡 MIDI Monitor</h3>
-
-<div
-id="log"
-class="log">
-
-Iniciando sistema...
-
-</div>
-
+<div id="log" class="log">Iniciando sistema...</div>
 </section>
 
 </main>
 
-
 <script>
+const $=id=>document.getElementById(id);
+const NOTES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const INT=["Unísono","2ª menor","2ª mayor","3ª menor","3ª mayor","4ª justa","Tritono","5ª justa","6ª menor","6ª mayor","7ª menor","7ª mayor"];
+const MAJOR=[0,2,4,5,7,9,11],MINOR=[0,2,3,5,7,8,10];
+const CH=[["",[0,4,7]],["m",[0,3,7]],["7",[0,4,7,10]],["m7",[0,3,7,10]],["maj7",[0,4,7,11]],["dim",[0,3,6]],["°7",[0,3,6,9]],["m7♭5",[0,3,6,10]],["aug",[0,4,8]],["sus4",[0,5,7]],["sus2",[0,2,7]],["5",[0,7]]];
+const MINQ=["m","m7","dim","°7","m7♭5"];
+const FUNC=["TÓNICA","SUBDOMINANTE","TÓNICA","SUBDOMINANTE","DOMINANTE","TÓNICA","DOMINANTE"];
+const BASE={"TÓNICA":5,"SUBDOMINANTE":35,"DOMINANTE":65};
+const COL={green:"#18d66b",blue:"#287cff",red:"#ff3048",yellow:"#e3d33e"};
+const ROMAN=["I","II","III","IV","V","VI","VII"];
 
-/* =========================================================
-   DATOS MUSICALES
-========================================================= */
+let root=9,mode="minor",ac=null,ecgT=0,ecgC="green";
+const active=new Set();
 
-const NOTES = [
-    "C","C#","D","D#","E","F",
-    "F#","G","G#","A","A#","B"
-];
+/* ---------- LOG ---------- */
+function log(t){
+  const b=$("log"),d=document.createElement("div");
+  d.textContent="> "+t;b.appendChild(d);b.scrollTop=b.scrollHeight;
+}
 
-const INTERVAL_NAMES = [
-    "Unísono",
-    "2ª menor",
-    "2ª mayor",
-    "3ª menor",
-    "3ª mayor",
-    "4ª justa",
-    "Tritono",
-    "5ª justa",
-    "6ª menor",
-    "6ª mayor",
-    "7ª menor",
-    "7ª mayor"
-];
+/* ---------- AUDIO ---------- */
+function tone(m,d=1){
+  if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();
+  if(ac.state==="suspended")ac.resume();
+  const t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
+  o.type="triangle";
+  o.frequency.value=440*Math.pow(2,(m-69)/12);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(.1,t+.02);
+  g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g);g.connect(ac.destination);
+  o.start(t);o.stop(t+d+.05);
+}
 
-const MAJOR = [
-    0,2,4,5,7,9,11
-];
-
-const MINOR = [
-    0,2,3,5,7,8,10
-];
-
-let root = 9;
-let mode = "minor";
-
-let activeNotes = new Set();
-
-let history = [];
-
-let audioContext = null;
-
-
-/* =========================================================
-   DOM
-========================================================= */
-
-const $ = id =>
-    document.getElementById(id);
-
-
-/* =========================================================
-   TONALIDAD
-========================================================= */
-
-$("apply").onclick = () => {
-
-    root =
-        NOTES.indexOf(
-            $("root").value
-        );
-
-    mode =
-        $("mode").value;
-
-    updateTonality();
-
-    analyzeCurrent();
-
+/* ---------- TONALIDAD ---------- */
+function updateTonality(){
+  $("tonality").textContent=NOTES[root]+" "+(mode==="minor"?"menor":"mayor");
+}
+$("apply").onclick=()=>{
+  root=NOTES.indexOf($("root").value);
+  mode=$("mode").value;
+  updateTonality();
+  analyze();
 };
 
-
-function updateTonality(){
-
-    $("tonality").textContent =
-        NOTES[root] +
-        " " +
-        (
-            mode === "minor"
-            ? "menor"
-            : "mayor"
-        );
-
+/* ---------- RECONOCIMIENTO DE ACORDES ---------- */
+function detect(notes){
+  const bass=notes[0]%12,pcs=[...new Set(notes.map(n=>n%12))];
+  if(pcs.length===1)return{root:bass,q:"",name:NOTES[bass]};
+  const order=[bass,...pcs.filter(p=>p!==bass)];
+  for(const r of order){
+    const rel=pcs.map(p=>(p-r+12)%12).sort((a,b)=>a-b);
+    const t=CH.find(c=>c[1].length===rel.length&&c[1].every((v,i)=>v===rel[i]));
+    if(t)return{root:r,q:t[0],name:NOTES[r]+t[0]+(r!==bass?"/"+NOTES[bass]:"")};
+  }
+  return{root:bass,q:null,name:"CONJUNTO"};
 }
 
+/* ---------- ANÁLISIS ---------- */
+function analyze(){
+  const notes=[...active].sort((a,b)=>a-b);
+  if(!notes.length)return reset();
 
-/* =========================================================
-   FUNCIÓN DE UNA NOTA
-========================================================= */
+  const c=detect(notes),minor=mode==="minor",sc=minor?MINOR:MAJOR;
+  const iv=(c.root-root+12)%12;
+  let idx=sc.indexOf(iv);
+  if(idx<0&&minor&&iv===11)idx=6;
 
-function analyzeNote(midi){
+  const pcs=[...new Set(notes.map(n=>n%12))];
+  const inScale=p=>{const d=(p-root+12)%12;return sc.includes(d)||(minor&&d===11)};
 
-    const pitch =
-        midi % 12;
+  let fn=idx<0?"CROMÁTICO":FUNC[idx];
+  if(c.q==="7"&&idx!==4)fn="DOMINANTE SECUNDARIA";
 
-    const interval =
-        (pitch - root + 12) % 12;
+  let deg="—";
+  if(idx>=0){
+    deg=ROMAN[idx];
+    if(MINQ.includes(c.q))deg=deg.toLowerCase();
+    if(c.q==="dim"||c.q==="°7")deg+="°";
+    if(c.q==="m7♭5")deg+="ø";
+  }
 
-    let degree = "Cromático";
-    let func = "CROMÁTICO";
-    let tension = 55;
-    let color = "yellow";
+  let t=BASE[fn]!==undefined?BASE[fn]:55;
+  if(c.q==="7")t+=15;
+  if(["dim","°7","m7♭5"].includes(c.q))t+=15;
+  if(c.q==="aug")t+=10;
+  pcs.forEach(p=>{if(!inScale(p))t+=12});
+  for(let i=0;i<pcs.length;i++)for(let j=i+1;j<pcs.length;j++){
+    const d=Math.abs(pcs[i]-pcs[j]),ic=Math.min(d,12-d);
+    if(ic===1)t+=8;
+    if(ic===6)t+=10;
+  }
+  t=Math.min(100,Math.round(t));
 
-    /*
-        I
-    */
+  let col=t<30?"green":t<65?"blue":"red";
+  if(idx<0&&col!=="red")col="yellow";
 
-    if(interval === 0){
+  $("currentNote").textContent=NOTES[c.root];
+  $("currentNote").className="current-note "+col+"-text";
+  $("currentChord").textContent=c.name;
+  $("currentFunction").textContent=fn;
+  $("degree").textContent=deg;
+  $("function").textContent=fn;
+  $("fundamental").textContent=NOTES[c.root];
+  $("notes").textContent=notes.map(n=>NOTES[n%12]).join(" · ");
+  $("midi").textContent=notes.join(", ");
+  $("intervalCount").textContent=notes.length;
+  $("tension").textContent=t+"%";
+  $("meter").style.width=t+"%";
+  $("meter").className="meter-fill "+col;
 
-        degree = "I";
-        func = "TÓNICA";
-        tension = 5;
-        color = "green";
-
-    }
-
-    /*
-        IV
-    */
-
-    else if(interval === 5){
-
-        degree = "IV";
-        func = "SUBDOMINANTE";
-        tension = 45;
-        color = "blue";
-
-    }
-
-    /*
-        V
-    */
-
-    else if(interval === 7){
-
-        degree = "V";
-        func = "DOMINANTE";
-        tension = 90;
-        color = "red";
-
-    }
-
-    /*
-        Tritono
-    */
-
-    else if(interval === 6){
-
-        degree = "♭5";
-        func = "TRITONO";
-        tension = 100;
-        color = "red";
-
-    }
-
-    else {
-
-        const scale =
-            mode === "major"
-            ? MAJOR
-            : MINOR;
-
-        const index =
-            scale.indexOf(interval);
-
-        if(index >= 0){
-
-            const degrees =
-                ["I","II","III","IV","V","VI","VII"];
-
-            degree =
-                degrees[index];
-
-            if(
-                index === 1 ||
-                index === 3 ||
-                index === 5
-            ){
-
-                func = "MOVIMIENTO";
-                tension = 35;
-                color = "blue";
-
-            }else{
-
-                func = "ESTABILIDAD";
-                tension = 20;
-                color = "yellow";
-
-            }
-
-        }
-
-    }
-
-    return {
-
-        midi,
-        pitch,
-        name:NOTES[pitch],
-        interval,
-        degree,
-        func,
-        tension,
-        color
-
-    };
-
+  showIntervals(notes);
+  addHistory(t,col);
+  ecgT=t;ecgC=col;
 }
-
-
-/* =========================================================
-   ANALIZAR CONJUNTO DE NOTAS
-========================================================= */
-
-function analyzeChord(){
-
-    const notes =
-        [...activeNotes]
-        .sort((a,b)=>a-b);
-
-    if(!notes.length){
-
-        resetDisplay();
-
-        return;
-
-    }
-
-    const analyses =
-        notes.map(analyzeNote);
-
-    /*
-        Buscar una raíz posible.
-
-        Primero probamos si alguna nota
-        corresponde a I, IV o V.
-    */
-
-    let rootCandidate =
-        analyses.find(
-            n => n.interval === 0
-        );
-
-    if(!rootCandidate){
-
-        rootCandidate =
-            analyses[0];
-
-    }
-
-    const rootPitch =
-        rootCandidate.pitch;
-
-
-    /*
-        Intervalos respecto a la nota más grave
-    */
-
-    const bass =
-        notes[0];
-
-    const intervals =
-        notes.map(
-            midi =>
-            (midi - bass + 12) % 12
-        );
-
-
-    /*
-        Reconocimiento básico de acordes
-    */
-
-    let chord = "CONJUNTO";
-
-    const pcs =
-        notes.map(n => n % 12);
-
-    const unique =
-        [...new Set(pcs)];
-
-    const relative =
-        unique.map(
-            p => (p - rootPitch + 12) % 12
-        ).sort(
-            (a,b)=>a-b
-        );
-
-
-    if(sameArray(relative,[0,4,7])){
-
-        chord =
-            NOTES[rootPitch] + " MAYOR";
-
-    }
-
-    else if(
-        sameArray(
-            relative,
-            [0,3,7]
-        )
-    ){
-
-        chord =
-            NOTES[rootPitch] + " MENOR";
-
-    }
-
-    else if(
-        sameArray(
-            relative,
-            [0,4,7,10]
-        )
-    ){
-
-        chord =
-            NOTES[rootPitch] + " 7";
-
-    }
-
-    else if(
-        sameArray(
-            relative,
-            [0,3,7,10]
-        )
-    ){
-
-        chord =
-            NOTES[rootPitch] + " m7";
-
-    }
-
-    else if(
-        sameArray(
-            relative,
-            [0,4,7,11]
-        )
-    ){
-
-        chord =
-            NOTES[rootPitch] + " MAJ7";
-
-    }
-
-    else if(
-        sameArray(
-            relative,
-            [0,3,6]
-        )
-    ){
-
-        chord =
-            NOTES[rootPitch] + " DIM";
-
-    }
-
-
-    /*
-        Tensión promedio
-    */
-
-    let tension =
-        analyses.reduce(
-            (sum,n)=>sum+n.tension,
-            0
-        ) / analyses.length;
-
-
-    /*
-        Acordes de dominante aumentan
-        tensión si contienen V.
-    */
-
-    if(
-        analyses.some(
-            n => n.interval === 7
-        )
-    ){
-
-        tension += 15;
-
-    }
-
-
-    /*
-        Tritono
-    */
-
-    if(
-        intervals.includes(6)
-    ){
-
-        tension += 20;
-
-    }
-
-
-    tension =
-        Math.min(
-            100,
-            Math.round(tension)
-        );
-
-
-    /*
-        Determinar color general
-    */
-
-    let color = "yellow";
-
-    if(tension < 30)
-        color = "green";
-
-    else if(tension < 65)
-        color = "blue";
-
-    else
-        color = "red";
-
-
-    /*
-        Mostrar
-    */
-
-    const lowest =
-        analyzeNote(bass);
-
-    $("currentNote").textContent =
-        lowest.name;
-
-    $("currentChord").textContent =
-        chord;
-
-    $("currentFunction").textContent =
-        getChordFunction(
-            relative,
-            rootPitch
-        );
-
-    $("degree").textContent =
-        lowest.degree;
-
-    $("function").textContent =
-        getChordFunction(
-            relative,
-            rootPitch
-        );
-
-    $("fundamental").textContent =
-        NOTES[rootPitch];
-
-    $("notes").textContent =
-        notes.map(
-            n=>NOTES[n%12]
-        ).join(" · ");
-
-    $("midi").textContent =
-        notes.join(", ");
-
-    $("intervalCount").textContent =
-        intervals.length;
-
-    $("tension").textContent =
-        tension + "%";
-
-    $("meter").style.width =
-        tension + "%";
-
-    $("meter").className =
-        "meter-fill " + color;
-
-
-    $("currentNote").className =
-        "current-note " +
-        color + "-text";
-
-
-    showIntervals(
-        notes
-    );
-
-    addHistory(
-        tension,
-        color
-    );
-
-    drawECG(
-        tension
-    );
-
-}
-
-
-/* =========================================================
-   FUNCIÓN DEL ACORDE
-========================================================= */
-
-function getChordFunction(intervals, rootPitch){
-
-    /*
-        Relación del acorde con la tonalidad
-    */
-
-    const distance =
-        (rootPitch - root + 12) % 12;
-
-
-    if(distance === 0)
-        return "TÓNICA";
-
-    if(distance === 5)
-        return "SUBDOMINANTE";
-
-    if(distance === 7)
-        return "DOMINANTE";
-
-    if(intervals.includes(6))
-        return "TENSIÓN / TRITONO";
-
-    return "MOVIMIENTO ARMÓNICO";
-
-}
-
-
-/* =========================================================
-   ARRAY
-========================================================= */
-
-function sameArray(a,b){
-
-    if(a.length !== b.length)
-        return false;
-
-    return a.every(
-        (value,index)=>
-            value === b[index]
-    );
-
-}
-
-
-/* =========================================================
-   INTERVALOS
-========================================================= */
 
 function showIntervals(notes){
-
-    const box =
-        $("intervals");
-
-    box.innerHTML = "";
-
-    if(notes.length < 2){
-
-        box.innerHTML =
-            `<div class="interval">
-                Tocá más de una nota para analizar intervalos.
-            </div>`;
-
-        return;
-
-    }
-
-    const bass =
-        notes[0];
-
-    notes.forEach(note => {
-
-        const distance =
-            Math.abs(note - bass) % 12;
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            "interval";
-
-        div.innerHTML =
-            `<strong>
-                ${NOTES[note%12]}
-             </strong>
-             →
-             ${INTERVAL_NAMES[distance]}
-             (${distance})`;
-
-        box.appendChild(div);
-
-    });
-
+  const box=$("intervals");
+  box.innerHTML="";
+  if(notes.length<2){
+    box.innerHTML='<div class="interval">Tocá más de una nota para analizar intervalos.</div>';
+    return;
+  }
+  const bass=notes[0];
+  notes.forEach(n=>{
+    const d=n-bass,div=document.createElement("div");
+    div.className="interval";
+    div.innerHTML="<strong>"+NOTES[n%12]+"</strong> → "+(d===0?"Fundamental":d===12?"Octava":INT[d%12]+(d>12?" (+8ª)":""))+" ("+d+")";
+    box.appendChild(div);
+  });
 }
 
-
-/* =========================================================
-   RESET
-========================================================= */
-
-function resetDisplay(){
-
-    $("currentNote").textContent = "—";
-    $("currentChord").textContent = "SIN SEÑAL";
-    $("currentFunction").textContent =
-        "ESPERANDO NOTAS";
-
-    $("degree").textContent = "—";
-    $("function").textContent = "—";
-    $("fundamental").textContent = "—";
-    $("notes").textContent = "—";
-    $("midi").textContent = "—";
-    $("intervalCount").textContent = "—";
-
-    $("tension").textContent = "0%";
-
-    $("meter").style.width = "0%";
-
+function reset(){
+  $("currentNote").textContent="—";
+  $("currentNote").className="current-note";
+  $("currentChord").textContent="SIN SEÑAL";
+  $("currentFunction").textContent="ESPERANDO NOTAS";
+  ["degree","function","fundamental","notes","midi","intervalCount"].forEach(i=>$(i).textContent="—");
+  $("tension").textContent="0%";
+  $("meter").style.width="0%";
+  $("intervals").innerHTML='<div class="interval">Esperando notas...</div>';
+  ecgT=0;
 }
 
+function addHistory(t,col){
+  const h=$("history"),bar=document.createElement("div");
+  bar.className="history-item "+col;
+  bar.style.height=Math.max(8,t*.7)+"px";
+  h.appendChild(bar);
+  if(h.children.length>200)h.removeChild(h.firstChild);
+  h.scrollLeft=h.scrollWidth;
+}
 
-/* =========================================================
-   PIANO
-========================================================= */
+/* ---------- NOTAS ACTIVAS ---------- */
+function refresh(){
+  document.querySelectorAll(".white,.black").forEach(k=>
+    k.classList.toggle("active",active.has(Number(k.dataset.midi))));
+  analyze();
+}
+function noteOn(m,snd){
+  if(active.has(m))return;
+  active.add(m);
+  if(snd)tone(m);
+  refresh();
+  log("ON → "+NOTES[m%12]+" "+m);
+}
+function noteOff(m){
+  if(active.delete(m))refresh();
+}
+function toggle(m){active.has(m)?noteOff(m):noteOn(m,true)}
+$("clear").onclick=()=>{active.clear();refresh()};
 
+/* ---------- PIANO ---------- */
 function createPiano(){
-
-    const piano =
-        $("piano");
-
-    const start = 48;
-    const end = 72;
-
-    let whiteIndex = 0;
-
-    /*
-        Blancas
-    */
-
-    for(
-        let midi=start;
-        midi<=end;
-        midi++
-    ){
-
-        const pitch =
-            midi % 12;
-
-        if(
-            ![1,3,6,8,10]
-            .includes(pitch)
-        ){
-
-            const key =
-                document.createElement("div");
-
-            key.className =
-                "white";
-
-            key.dataset.midi =
-                midi;
-
-            key.style.left =
-                whiteIndex * 45 + "px";
-
-            key.textContent =
-                NOTES[pitch];
-
-            key.onclick =
-                () => toggleNote(midi);
-
-            piano.appendChild(key);
-
-            whiteIndex++;
-
-        }
-
+  const p=$("piano"),start=48,end=72,BL=[1,3,6,8,10];
+  let w=0;
+  for(let m=start;m<=end;m++){
+    if(BL.includes(m%12))continue;
+    const k=document.createElement("div");
+    k.className="white";
+    k.dataset.midi=m;
+    k.style.left=w*45+"px";
+    k.textContent=NOTES[m%12];
+    k.onclick=()=>toggle(m);
+    p.appendChild(k);
+    if([0,2,5,7,9].includes(m%12)&&m+1<=end){
+      const b=document.createElement("div");
+      b.className="black";
+      b.dataset.midi=m+1;
+      b.style.left=(w*45+31)+"px";
+      b.onclick=()=>toggle(m+1);
+      p.appendChild(b);
     }
-
-
-    /*
-        Negras
-    */
-
-    whiteIndex = 0;
-
-    for(
-        let midi=start;
-        midi<=end;
-        midi++
-    ){
-
-        const pitch =
-            midi % 12;
-
-        if(
-            ![1,3,6,8,10]
-            .includes(pitch)
-        ){
-
-            if(
-                [0,2,5,7,9]
-                .includes(pitch)
-            ){
-
-                const black =
-                    document.createElement("div");
-
-                black.className =
-                    "black";
-
-                black.dataset.midi =
-                    midi + 1;
-
-                black.style.left =
-                    (
-                        whiteIndex * 45 +
-                        31
-                    ) + "px";
-
-                black.onclick =
-                    () =>
-                        toggleNote(
-                            midi + 1
-                        );
-
-                piano.appendChild(black);
-
-            }
-
-            whiteIndex++;
-
-        }
-
-    }
-
+    w++;
+  }
 }
 
+/* ---------- TECLADO PC ---------- */
+const PC={a:60,w:61,s:62,e:63,d:64,f:65,t:66,g:67,y:68,h:69,u:70,j:71,k:72};
+const skip=e=>e.ctrlKey||e.metaKey||e.altKey||/INPUT|SELECT|TEXTAREA/.test(e.target.tagName);
+document.addEventListener("keydown",e=>{
+  if(e.repeat||skip(e))return;
+  const m=PC[e.key.toLowerCase()];
+  if(m!==undefined)noteOn(m,true);
+});
+document.addEventListener("keyup",e=>{
+  if(skip(e))return;
+  const m=PC[e.key.toLowerCase()];
+  if(m!==undefined)noteOff(m);
+});
 
-/* =========================================================
-   TOGGLE NOTE
-========================================================= */
+/* ---------- ECG ---------- */
+const cv=$("ecg"),ctx=cv.getContext("2d");
+let phase=0,prevY=null;
+function sizeCanvas(){cv.width=cv.clientWidth;cv.height=cv.clientHeight;prevY=null}
+sizeCanvas();
+window.addEventListener("resize",sizeCanvas);
 
-function toggleNote(midi){
-
-    if(
-        activeNotes.has(midi)
-    ){
-
-        activeNotes.delete(midi);
-
-    }else{
-
-        activeNotes.add(midi);
-
-    }
-
-    updateKeyboard();
-
-    analyzeChord();
-
+function wave(p,a){
+  if(p>=.1&&p<.2)return-.15*a*Math.sin((p-.1)/.1*Math.PI);
+  if(p>=.3&&p<.36)return-a*(1-Math.abs((p-.33)/.03));
+  if(p>=.36&&p<.4)return.3*a*Math.sin((p-.36)/.04*Math.PI);
+  if(p>=.5&&p<.7)return-.25*a*Math.sin((p-.5)/.2*Math.PI);
+  return 0;
 }
 
-
-/* =========================================================
-   TECLADO VISUAL
-========================================================= */
-
-function updateKeyboard(){
-
-    document
-        .querySelectorAll(
-            ".white,.black"
-        )
-        .forEach(
-            key => {
-
-                const midi =
-                    Number(
-                        key.dataset.midi
-                    );
-
-                key.classList.toggle(
-                    "active",
-                    activeNotes.has(midi)
-                );
-
-            }
-        );
-
+function ecgLoop(){
+  const w=cv.width,h=cv.height,s=2;
+  ctx.drawImage(cv,-s,0);
+  ctx.clearRect(w-s,0,s,h);
+  const a=active.size?Math.min(h/2-8,15+ecgT*.6):0;
+  const period=Math.max(60,170-ecgT*1.2);
+  phase=(phase+s/period)%1;
+  const y=h/2+wave(phase,a);
+  ctx.beginPath();
+  ctx.moveTo(w-s,prevY===null?y:prevY);
+  ctx.lineTo(w,y);
+  ctx.strokeStyle=active.size?COL[ecgC]:"#3a4150";
+  ctx.lineWidth=2;
+  ctx.stroke();
+  prevY=y;
+  requestAnimationFrame(ecgLoop);
 }
 
-
-/* =========================================================
-   TECLADO PC
-========================================================= */
-
-const PC_KEYS = {
-
-    "a":60,
-    "s":62,
-    "d":64,
-    "f":65,
-    "g":67,
-    "h":69,
-    "j":71,
-    "k":72,
-
-    "w":61,
-    "e":63,
-    "t":66,
-    "y":68,
-    "u":70
-
+/* ---------- DEMO ---------- */
+const PROG=[[57,60,64],[53,57,60],[55,59,62],[52,56,59,62],[57,60,64]];
+let di=0,dt=null;
+function step(){
+  active.clear();
+  PROG[di].forEach(n=>active.add(n));
+  PROG[di].forEach(n=>tone(n));
+  refresh();
+  di=(di+1)%PROG.length;
+}
+$("demo").onclick=()=>{
+  if(dt){
+    clearInterval(dt);dt=null;
+    $("demo").textContent="▶ DEMO";
+    active.clear();refresh();
+    return;
+  }
+  $("demo").textContent="■ DETENER";
+  step();
+  dt=setInterval(step,1200);
 };
 
-document.addEventListener(
-    "keydown",
-    event => {
-
-        if(event.repeat)
-            return;
-
-        const midi =
-            PC_KEYS[
-                event.key.toLowerCase()
-            ];
-
-        if(midi === undefined)
-            return;
-
-        activeNotes.add(midi);
-
-        updateKeyboard();
-
-        analyzeChord();
-
-        log(
-            "KEY ON → " +
-            NOTES[midi%12] +
-            " MIDI " +
-            midi
-        );
-
-    }
-);
-
-
-document.addEventListener(
-    "keyup",
-    event => {
-
-        const midi =
-            PC_KEYS[
-                event.key.toLowerCase()
-            ];
-
-        if(midi === undefined)
-            return;
-
-        activeNotes.delete(midi);
-
-        updateKeyboard();
-
-        analyzeChord();
-
-    }
-);
-
-
-/* =========================================================
-   HISTORIAL
-========================================================= */
-
-function addHistory(
-    tension,
-    color
-){
-
-    const historyBox =
-        $("history");
-
-    const bar =
-        document.createElement("div");
-
-    bar.className =
-        "history-item " +
-        color;
-
-    bar.style.height =
-        Math.max(
-            8,
-            tension * .7
-        ) + "px";
-
-    historyBox.appendChild(bar);
-
-    historyBox.scrollLeft =
-        historyBox.scrollWidth;
-
+/* ---------- MIDI ---------- */
+function midiMsg(e){
+  const[s,n,v]=e.data,cmd=s&0xf0;
+  if(cmd===0x90&&v>0)noteOn(n,false);
+  else if(cmd===0x80||cmd===0x90)noteOff(n);
 }
-
-
-/* =========================================================
-   ECG
-========================================================= */
-
-const canvas =
-    $("ecg");
-
-const ctx =
-    canvas.getContext("2d");
-
-function resizeCanvas(){
-
-    canvas.width =
-        canvas.clientWidth;
-
-    canvas.height =
-        canvas.clientHeight;
-
-}
-
-resizeCanvas();
-
-window.addEventListener(
-    "resize",
-    resizeCanvas
-);
-
-
-let ecgX = 0;
-
-function drawECG(tension){
-
-    resizeCanvas();
-
-    const w =
-        canvas.width;
-
-    const h =
-        canvas.height;
-
-    /*
-        desplazamos imagen
-    */
-
-    const image =
-        ctx.getImageData(
-            2,
-            0,
-            w - 2,
-            h
-        );
-
-    ctx.clearRect(
-        0,
-        0,
-        w,
-        h
-    );
-
-    ctx.putImageData(
-        image,
-        0,
-        0
-    );
-
-
-    /*
-        forma de pulso
-    */
-
-    const center =
-        h / 2;
-
-    const amplitude =
-        10 + tension * .7;
-
-    let y =
-        center;
-
-    const phase =
-        Date.now() / 120;
-
-
-    if(
-        tension > 75
-    ){
-
-        const cycle =
-            Date.now() % 1000;
-
-        if(cycle < 120){
-
-            y =
-                center -
-                amplitude;
-
-        }
-
-        else if(cycle < 200){
-
-            y =
-                center +
-                amplitude * .7;
-
-        }
-
-    }
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        w - 2,
-        center
-    );
-
-    ctx.lineTo(
-        w - 1,
-        y
-    );
-
-    ctx.strokeStyle =
-        "#20d46b";
-
-    ctx.lineWidth = 2;
-
-    ctx.stroke();
-
-}
-
-
-/* =========================================================
-   DEMO MUSICAL
-========================================================= */
-
-const demoProgression = [
-
-    [57,60,64], // Am
-    [53,57,60], // F
-    [55,59,62], // G
-    [52,56,59,62], // E7
-    [57,60,64], // Am
-
-];
-
-let demoIndex = 0;
-let demoTimer = null;
-
-$("demo").onclick = () => {
-
-    if(demoTimer){
-
-        clearInterval(
-            demoTimer
-        );
-
-        demoTimer = null;
-
-        $("demo").textContent =
-            "▶ DEMO";
-
-        return;
-
-    }
-
-    $("demo").textContent =
-        "■ DETENER";
-
-    playDemo();
-
-    demoTimer =
-        setInterval(
-            playDemo,
-            1200
-        );
-
-};
-
-
-function playDemo(){
-
-    activeNotes.clear();
-
-    demoProgression[
-        demoIndex
-    ].forEach(
-        n =>
-            activeNotes.add(n)
-    );
-
-    updateKeyboard();
-
-    analyzeChord();
-
-    /*
-        sonido real
-    */
-
-    playChord(
-        demoProgression[
-            demoIndex
-        ]
-    );
-
-    demoIndex++;
-
-    if(
-        demoIndex >=
-        demoProgression.length
-    ){
-
-        demoIndex = 0;
-
-    }
-
-}
-
-
-/* =========================================================
-   AUDIO
-========================================================= */
-
-function playChord(notes){
-
-    if(!audioContext){
-
-        audioContext =
-            new (
-                window.AudioContext ||
-                window.webkitAudioContext
-            )();
-
-    }
-
-    const now =
-        audioContext.currentTime;
-
-    notes.forEach(
-        midi => {
-
-            const osc =
-                audioContext
-                .createOscillator();
-
-            const gain =
-                audioContext
-                .createGain();
-
-            const frequency =
-                440 *
-                Math.pow(
-                    2,
-                    (midi-69)/12
-                );
-
-            osc.frequency.value =
-                frequency;
-
-            osc.type =
-                "sine";
-
-            gain.gain.setValueAtTime(
-                0,
-                now
-            );
-
-            gain.gain.linearRampToValueAtTime(
-                .08,
-                now + .03
-            );
-
-            gain.gain.exponentialRampToValueAtTime(
-                .001,
-                now + 1
-            );
-
-            osc.connect(gain);
-
-            gain.connect(
-                audioContext.destination
-            );
-
-            osc.start(now);
-
-            osc.stop(
-                now + 1.05
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   MIDI REAL
-========================================================= */
-
 async function initMIDI(){
-
-    if(
-        !navigator.requestMIDIAccess
-    ){
-
-        log(
-            "Web MIDI no disponible. Usá el teclado o DEMO."
-        );
-
-        return;
-
-    }
-
-    try{
-
-        const access =
-            await navigator.requestMIDIAccess();
-
-        log(
-            "MIDI habilitado."
-        );
-
-        for(
-            const input
-            of access.inputs.values()
-        ){
-
-            input.onmidimessage =
-                midiMessage;
-
-            log(
-                "Entrada MIDI: " +
-                input.name
-            );
-
-        }
-
-    }catch(error){
-
-        log(
-            "No se pudo iniciar MIDI: " +
-            error.message
-        );
-
-    }
-
+  if(!navigator.requestMIDIAccess)return log("Web MIDI no disponible. Usá el teclado o DEMO.");
+  try{
+    const a=await navigator.requestMIDIAccess();
+    const attach=()=>{
+      a.inputs.forEach(i=>{i.onmidimessage=midiMsg});
+      log("Entradas MIDI: "+(a.inputs.size?[...a.inputs.values()].map(i=>i.name).join(", "):"ninguna"));
+    };
+    attach();
+    a.onstatechange=attach;
+  }catch(err){
+    log("No se pudo iniciar MIDI: "+err.message);
+  }
 }
 
-
-function midiMessage(event){
-
-    const data =
-        event.data;
-
-    const command =
-        data[0] & 0xf0;
-
-    const note =
-        data[1];
-
-    const velocity =
-        data[2];
-
-
-    /*
-        NOTE ON
-    */
-
-    if(
-        command === 0x90 &&
-        velocity > 0
-    ){
-
-        activeNotes.add(
-            note
-        );
-
-        updateKeyboard();
-
-        analyzeChord();
-
-        log(
-            "MIDI ON → " +
-            NOTES[note%12] +
-            " " +
-            note
-        );
-
+/* ---------- YOUTUBE ---------- */
+$("youtubeButton").onclick=()=>{
+  const st=$("youtubeStatus"),url=$("youtube").value.trim();
+  if(!url){st.textContent="Pegá un enlace primero.";return}
+  let id=null;
+  try{
+    const u=new URL(url);
+    if(u.hostname.includes("youtu.be"))id=u.pathname.slice(1);
+    else if(u.hostname.includes("youtube.com")){
+      id=u.searchParams.get("v");
+      if(!id){const m=u.pathname.match(/^\/(?:shorts|embed|live)\/([^/?]+)/);if(m)id=m[1]}
     }
-
-
-    /*
-        NOTE OFF
-    */
-
-    if(
-        command === 0x80 ||
-        (
-            command === 0x90 &&
-            velocity === 0
-        )
-    ){
-
-        activeNotes.delete(
-            note
-        );
-
-        updateKeyboard();
-
-        analyzeChord();
-
-    }
-
-}
-
-
-/* =========================================================
-   LOG
-========================================================= */
-
-function log(text){
-
-    const box =
-        $("log");
-
-    const line =
-        document.createElement("div");
-
-    line.textContent =
-        "> " + text;
-
-    box.appendChild(
-        line
-    );
-
-    box.scrollTop =
-        box.scrollHeight;
-
-}
-
-
-/* =========================================================
-   YOUTUBE
-========================================================= */
-
-$("youtubeButton").onclick =
-function(){
-
-    const url =
-        $("youtube").value.trim();
-
-    if(!url){
-
-        $("youtubeStatus").textContent =
-            "Pegá un enlace primero.";
-
-        return;
-
-    }
-
-    try{
-
-        const parsed =
-            new URL(url);
-
-        let id = null;
-
-        if(
-            parsed.hostname.includes(
-                "youtu.be"
-            )
-        ){
-
-            id =
-                parsed.pathname.slice(1);
-
-        }
-
-        else if(
-            parsed.hostname.includes(
-                "youtube.com"
-            )
-        ){
-
-            id =
-                parsed.searchParams.get(
-                    "v"
-                );
-
-        }
-
-        if(!id){
-
-            throw new Error();
-
-        }
-
-        $("youtubeStatus").innerHTML =
-            `
-            ✅ Video detectado:
-            <strong>${id}</strong>
-            <br><br>
-            La siguiente etapa es conectar una fuente
-            de audio analizable con el motor armónico.
-            `;
-
-        log(
-            "YouTube detectado → " +
-            id
-        );
-
-    }
-
-    catch{
-
-        $("youtubeStatus").textContent =
-            "No pude reconocer ese enlace.";
-
-    }
-
+  }catch(_){}
+  if(!id||!/^[\w-]{11}$/.test(id)){st.textContent="No pude reconocer ese enlace.";return}
+  st.innerHTML='✅ Video cargado: <strong>'+id+'</strong><br>El audio no se puede analizar desde el navegador: seguí la música con el piano o el MIDI.<iframe src="https://www.youtube.com/embed/'+id+'" allow="encrypted-media;picture-in-picture" allowfullscreen></iframe>';
+  log("YouTube → "+id);
 };
 
-
-/* =========================================================
-   ARRANQUE
-========================================================= */
-
+/* ---------- ARRANQUE ---------- */
 createPiano();
-
 updateTonality();
-
 initMIDI();
-
+ecgLoop();
 </script>
-
 </body>
 </html>
