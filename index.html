@@ -136,10 +136,11 @@ Pegá un link, cargá el video y tocá "Analizar audio" para que el tensiómetro
 <button id="mGen">GENERAR MELODÍA</button>
 <button id="mPlay">▶ TOCAR</button>
 <button id="mClear">BORRAR</button>
+<label>♩ = <input type="number" id="bpm" value="100" min="50" max="200" style="width:70px" onchange="compose()"></label>
 <label><input type="checkbox" id="live" checked> Escribir mientras suena</label>
 </div>
 <div id="scoreWrap" style="overflow-x:auto;margin-top:12px;background:#07090d;border:1px solid #252a35;border-radius:8px"><canvas id="score" height="170" style="width:auto;height:170px"></canvas></div>
-<div class="status">Un compás por acorde detectado: notas del acorde en los tiempos fuertes y notas de la escala en el medio, en el rango del violín. Cada vez que apretás "Generar" sale una variación distinta.</div>
+<div class="status">Con audio de YouTube se transcribe la línea melódica dominante (la voz) y se pasa al registro del violín. Sin audio, se compone una melodía sobre los acordes que tocás. Si el ritmo no te cuadra, ajustá el tempo (♩) y tocá Generar.</div>
 </section>
 
 <section class="panel">
@@ -541,7 +542,7 @@ function drawSpec(){
   requestAnimationFrame(drawSpec);
 }
 function stopCap(){
-  if(cap){an=null;ch.fill(0);kc.fill(0);clearInterval(cap.timer);cap.stream.getTracks().forEach(t=>t.stop());cap=null}
+  if(cap){clearInterval(cap.vtimer);endVoice();vn=null;an=null;ch.fill(0);kc.fill(0);clearInterval(cap.timer);cap.stream.getTracks().forEach(t=>t.stop());cap=null}
   const b=$("capture");
   if(b)b.textContent="🎧 ANALIZAR AUDIO";
   active.clear();refresh();
@@ -562,7 +563,9 @@ async function capture(){
     if(ac.state==="suspended")ac.resume();
     an=ac.createAnalyser();
     an.fftSize=16384;an.smoothingTimeConstant=.6;
-    ac.createMediaStreamSource(stream).connect(an);
+    const srcN=ac.createMediaStreamSource(stream);
+    srcN.connect(an);
+    vn=ac.createAnalyser();vn.fftSize=8192;vn.smoothingTimeConstant=0;srcN.connect(vn);
     const data=new Float32Array(an.frequencyBinCount),hz=ac.sampleRate/an.fftSize;
     ch.fill(0);kc.fill(0);autoKey=true;keyLocked=false;
     let last="",pend="",keyPend={},keyN=0;
@@ -602,7 +605,7 @@ async function capture(){
       sel.forEach((x,i)=>active.add((i===0?48:60)+x[1]));
       refresh();
     },150);
-    cap={stream,timer};
+    cap={stream,timer,vtimer:startVoice()};
     stream.getAudioTracks()[0].onended=stopCap;
     $("capture").textContent="■ DETENER ANÁLISIS";
     log("Escuchando el audio de la pestaña...");
@@ -613,7 +616,8 @@ async function capture(){
 
 /* ---------- MELODÍA PARA VIOLÍN ---------- */
 const prog=[];
-let bars=[],mprev=72,mplaying=false;
+let bars=[],mprev=72,mplaying=false,vn=null,curChord="",barBeat=0,SH=0;
+const vnotes=[];
 const sc2=$("score"),sg=sc2.getContext("2d");
 
 function onChord(name,pcs){
@@ -621,7 +625,8 @@ function onChord(name,pcs){
   if(prog.length&&prog[prog.length-1].name===name)return;
   prog.push({name,pcs});
   if(prog.length>64)prog.shift();
-  if($("live").checked){
+  curChord=name;
+  if($("live").checked&&!cap&&!vnotes.length){
     bars.push(makeBar(prog[prog.length-1]));
     if(bars.length>64)bars.shift();
     drawScore(true);
@@ -646,6 +651,7 @@ function makeBar(ch){
 }
 
 function compose(){
+  if(vnotes.length){bars=[];barBeat=0;vnotes.forEach(addVoiceNote);drawScore(true);return}
   mprev=72;
   bars=prog.map(makeBar);
   drawScore(true);
@@ -653,6 +659,7 @@ function compose(){
 
 function drawScore(scroll){
   const U=36,bw=4*U+14,top=62,H=170;
+  SH=shiftFor();
   const W=Math.max($("scoreWrap").clientWidth,80+bars.length*bw);
   sc2.width=W;sc2.height=H;
   sg.clearRect(0,0,W,H);
@@ -674,16 +681,17 @@ function drawScore(scroll){
     sg.fillText(b.name,x0+8,top-22);
     let beat=0;
     b.notes.forEach(n=>{
-      const x=x0+22+beat*U,st=step(n.m),y=Y(st);
+      const mm=fm(n.m),x=x0+22+beat*U,st=step(mm),y=Y(st);
       sg.strokeStyle="#bbb";
       for(let s=28;s>=st;s-=2){sg.beginPath();sg.moveTo(x-10,Y(s)+.5);sg.lineTo(x+10,Y(s)+.5);sg.stroke()}
       for(let s=40;s<=st;s+=2){sg.beginPath();sg.moveTo(x-10,Y(s)+.5);sg.lineTo(x+10,Y(s)+.5);sg.stroke()}
       sg.strokeStyle=sg.fillStyle="#e8e8e8";sg.lineWidth=1.5;
       sg.beginPath();sg.ellipse(x,y,6,4.5,-.3,0,7);
-      n.d===1?sg.fill():sg.stroke();
+      n.d<2?sg.fill():sg.stroke();
       const up=st<34;
-      sg.beginPath();sg.moveTo(up?x+5.5:x-5.5,y);sg.lineTo(up?x+5.5:x-5.5,up?y-28:y+28);sg.stroke();
-      if([1,3,6,8,10].includes(n.m%12)){sg.font="15px Arial";sg.fillText("♯",x-18,y+5)}
+      if(n.d<4){const bx=up?x+5.5:x-5.5,ey=up?y-28:y+28;sg.beginPath();sg.moveTo(bx,y);sg.lineTo(bx,ey);if(n.d===.5)sg.lineTo(bx+8,up?ey+10:ey-10);sg.stroke()}
+      if(n.d===1.5||n.d===3){sg.beginPath();sg.arc(x+11,y-2,1.5,0,7);sg.fill()}
+      if([1,3,6,8,10].includes(mm%12)){sg.font="15px Arial";sg.fillText("♯",x-18,y+5)}
       sg.lineWidth=1;
       beat+=n.d;
     });
@@ -692,6 +700,95 @@ function drawScore(scroll){
   });
   if(scroll)$("scoreWrap").scrollLeft=W;
 }
+
+/* ---------- LÍNEA MELÓDICA DE LA VOZ ---------- */
+const QD=[.5,1,1.5,2,3,4];
+let vd=null,vcur=null,vsil=0,vrec=[];
+
+function quant(sec){
+  const b=sec*(+$("bpm").value||100)/60;
+  return QD.reduce((a,x)=>Math.abs(x-b)<Math.abs(a-b)?x:a,QD[0]);
+}
+function addVoiceNote(n){
+  let d=quant(n.t1-n.t0);
+  if(!bars.length||barBeat>=4){bars.push({name:curChord,notes:[]});barBeat=0}
+  const rem=4-barBeat;
+  if(d>rem)d=[4,3,2,1.5,1,.5].find(x=>x<=rem)||.5;
+  bars[bars.length-1].notes.push({m:n.m,d});
+  barBeat+=d;
+}
+function shiftFor(){
+  if(!vnotes.length)return 0;
+  const a=vnotes.slice(0,12).map(n=>n.m).sort((x,y)=>x-y);
+  return Math.round((72-a[a.length>>1])/12)*12;
+}
+function fm(m){
+  m+=SH;
+  while(m>88)m-=12;
+  while(m<55)m+=12;
+  return m;
+}
+function pushVoice(n){
+  const last=vnotes[vnotes.length-1];
+  if(last&&last.m===n.m&&n.t0-last.t1<.15){
+    last.t1=n.t1;
+    if($("live").checked)compose();
+    return;
+  }
+  vnotes.push(n);
+  if(vnotes.length>240)vnotes.shift();
+  if($("live").checked){
+    if(vnotes.length>=240)compose();
+    else{addVoiceNote(n);drawScore(true)}
+  }
+}
+function closeVoice(){
+  if(vcur&&vcur.t1-vcur.t0>=.12)pushVoice({m:vcur.m,t0:vcur.t0,t1:vcur.t1+.06});
+  vcur=null;vsil=0;
+}
+function voiceTick(){
+  if(!vn)return;
+  if(!vd||vd.length!==vn.frequencyBinCount)vd=new Float32Array(vn.frequencyBinCount);
+  vn.getFloatFrequencyData(vd);
+  const hz=ac.sampleRate/vn.fftSize,now=performance.now()/1000;
+  let mx=-Infinity;
+  for(let i=Math.floor(90/hz);i<1200/hz;i++)if(vd[i]>mx)mx=vd[i];
+  let pitch=null;
+  if(mx>-65){
+    const amp=i=>{let v=0;for(let k=i-1;k<=i+1;k++)if(vd[k]>-120)v=Math.max(v,Math.pow(10,vd[k]/20));return Math.sqrt(v)};
+    const sal=m=>{
+      const f0=440*Math.pow(2,(m-69)/12);
+      let s=0;
+      for(let h=1;h<=6;h++)s+=amp(Math.round(f0*h/hz))*Math.pow(.84,h-1);
+      return s;
+    };
+    let best=0,bm=0,tot=0,n=0;
+    for(let m=43;m<=84;m+=.5){
+      const s=sal(m);tot+=s;n++;
+      if(s>best){best=s;bm=m}
+    }
+    if(best>2.5*(tot/n))pitch=Math.round(bm);
+  }
+  vrec.push(pitch);
+  if(vrec.length>5)vrec.shift();
+  const cnt={};
+  vrec.forEach(x=>{if(x!==null)cnt[x]=(cnt[x]||0)+1});
+  let cand=null,cm=0;
+  for(const k in cnt)if(cnt[k]>cm){cm=cnt[k];cand=+k}
+  if(cm<3)cand=null;
+  if(cand!==null){
+    if(vcur&&vcur.m===cand)vcur.t1=now;
+    else{closeVoice();vcur={m:cand,t0:now,t1:now}}
+    vsil=0;
+  }else if(vcur&&++vsil>=4)closeVoice();
+}
+function startVoice(){
+  vcur=null;vsil=0;vrec=[];
+  vnotes.length=0;bars=[];barBeat=0;
+  drawScore();
+  return setInterval(voiceTick,60);
+}
+function endVoice(){closeVoice()}
 
 function violin(m,t,d){
   const o=ac.createOscillator(),lf=ac.createOscillator(),lg=ac.createGain(),f=ac.createBiquadFilter(),g=ac.createGain();
@@ -710,17 +807,17 @@ function violin(m,t,d){
 }
 
 $("mGen").onclick=()=>{
-  if(!prog.length){log("Todavía no hay acordes. Tocá algo o analizá audio primero.");return}
+  if(!prog.length&&!vnotes.length){log("Todavía no hay notas. Analizá audio o tocá algo primero.");return}
   compose();
 };
-$("mClear").onclick=()=>{prog.length=0;bars=[];mprev=72;drawScore()};
+$("mClear").onclick=()=>{prog.length=0;vnotes.length=0;bars=[];barBeat=0;mprev=72;drawScore()};
 $("mPlay").onclick=()=>{
   if(mplaying||!bars.length)return;
   if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();
   ac.resume();
-  const beat=.6;
+  const beat=60/(+$("bpm").value||100);
   let t=ac.currentTime+.1;
-  bars.forEach(b=>b.notes.forEach(n=>{violin(n.m,t,n.d*beat);t+=n.d*beat}));
+  bars.forEach(b=>b.notes.forEach(n=>{violin(fm(n.m),t,n.d*beat);t+=n.d*beat}));
   mplaying=true;
   $("mPlay").textContent="… TOCANDO";
   setTimeout(()=>{mplaying=false;$("mPlay").textContent="▶ TOCAR"},(t-ac.currentTime)*1000);
