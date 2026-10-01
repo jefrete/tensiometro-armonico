@@ -121,6 +121,13 @@ header{padding-right:74px}
 .ecan{height:180px;border:3px solid var(--k);border-radius:20px;overflow:hidden}
 #ph{position:absolute;top:0;bottom:0;width:6px;background:rgba(255,43,209,.75);border:2px solid var(--k);border-radius:6px;display:none;pointer-events:none}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}.btn:hover{transform:none}}
+
+/* Fullscreen robusto: fallback visual cuando getDisplayMedia bloquea Fullscreen API */
+html.app-fs, body.app-fs{width:100%;height:100%;overflow:hidden!important}
+body.app-fs{position:fixed!important;inset:0!important;margin:0!important;max-width:none!important;z-index:2147483000!important}
+body.app-fs #app{width:100vw!important;height:100vh!important;max-width:none!important;margin:0!important;border-radius:0!important;overflow:auto!important}
+body.app-fs #fs{position:fixed!important;top:10px!important;right:10px!important;z-index:2147483647!important}
+
 </style>
 </head>
 <body>
@@ -1028,9 +1035,22 @@ $("mMid").onclick=()=>{
 
 /* PANTALLA COMPLETA */
 const fsb=$("fs"),IC={on:'<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',off:'<path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/>'};
-const fsIcon=()=>{fsb.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#050507" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+(document.fullscreenElement?IC.off:IC.on)+'</svg>';fsb.title=document.fullscreenElement?"Salir de pantalla completa":"Pantalla completa"};
-fsb.onclick=()=>{try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(e){log("Pantalla completa no disponible en este navegador.")}};
-if(!document.documentElement.requestFullscreen)fsb.style.display="none";
+const pseudoFS=()=>document.body.classList.contains("app-fs");
+const fsActive=()=>!!document.fullscreenElement||pseudoFS();
+const fsIcon=()=>{fsb.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#050507" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">'+(fsActive()?IC.off:IC.on)+'</svg>';fsb.title=fsActive()?"Salir de pantalla completa":"Pantalla completa"};
+const enterPseudoFS=()=>{document.documentElement.classList.add("app-fs");document.body.classList.add("app-fs");fsIcon();dispatchEvent(new Event("resize"));log("Pantalla completa visual activada (compatible con captura de audio).")};
+const exitPseudoFS=()=>{document.documentElement.classList.remove("app-fs");document.body.classList.remove("app-fs");fsIcon();dispatchEvent(new Event("resize"))};
+fsb.onclick=async()=>{
+  if(document.fullscreenElement){try{await document.exitFullscreen()}catch(e){}return}
+  if(pseudoFS()){exitPseudoFS();return}
+  try{
+    if(!document.documentElement.requestFullscreen)throw new Error("no-fullscreen-api");
+    await document.documentElement.requestFullscreen({navigationUI:"hide"});
+  }catch(e){
+    // Chrome/Edge pueden rechazar Fullscreen mientras getDisplayMedia está capturando.
+    enterPseudoFS();
+  }
+};
 document.addEventListener("fullscreenchange",()=>{fsIcon();dispatchEvent(new Event("resize"))});
 fsIcon();
 
