@@ -65,10 +65,9 @@ main{max-width:1320px;margin:0 auto;padding:0 16px 30px}
 .interval{border:3px solid var(--k);border-radius:999px;padding:6px 14px;font-size:13px;background:linear-gradient(90deg,#fff,#ffe3f8)}
 .piano-wrapper{overflow-x:auto;padding-bottom:6px}
 .piano{position:relative;height:180px;width:675px;margin:0 auto}
-.white{position:absolute;top:0;width:45px;height:175px;background:linear-gradient(#fff,#f1f1f1);border:3px solid var(--k);border-radius:0 0 14px 14px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-size:11px;cursor:pointer;user-select:none}
-.black{position:absolute;top:0;width:29px;height:106px;background:linear-gradient(#2a2a2a,var(--k));border:3px solid var(--k);border-radius:0 0 10px 10px;z-index:5;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;color:#fff;font:700 9px Unbounded,sans-serif;letter-spacing:-.04em;user-select:none}
-.white.active,.black.active{background:linear-gradient(var(--pk2),var(--pk))}
-.black.active{color:#fff}
+.white{position:absolute;top:0;width:45px;height:175px;background:linear-gradient(#2a2a2a,var(--k));color:#fff;border:3px solid var(--k);border-radius:0 0 14px 14px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;font-size:11px;cursor:pointer;user-select:none}
+.black{position:absolute;top:0;width:29px;height:106px;background:linear-gradient(#fff,#f1f1f1);border:3px solid var(--k);border-radius:0 0 10px 10px;z-index:5;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;color:var(--k);font:700 9px Unbounded,sans-serif;letter-spacing:-.04em;user-select:none}
+.white.active,.black.active{background:linear-gradient(var(--pk2),var(--pk));color:#fff}
 .cbox{height:180px;border:3px solid var(--k);border-radius:20px;overflow:hidden;background:#fff}
 canvas{display:block;width:100%;height:100%;image-rendering:auto}
 .spec-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
@@ -224,7 +223,7 @@ body.app-fs #fs{position:fixed!important;top:10px!important;right:10px!important
   <div class="egrid" id="ecgGrid">
     <div class="ebox"><div class="etitle">Latido armónico</div><div class="ecg"><canvas id="ecg"></canvas></div></div>
   </div>
-  <div class="status">Cinco formas de ver la misma tensión: latido, sismógrafo, osciloscopio, radar y figura de Lissajous.</div>
+  <div class="status">Cuatro formas de ver la misma tensión: latido, sismógrafo, osciloscopio y radar.</div>
 </section>
 
 </main>
@@ -778,13 +777,6 @@ mkEcg("Radar de acordes","#0a0a0f",(g,w,h,t)=>{
   pcsNow().forEach(p=>{const th=-Math.PI/2+p/12*Math.PI*2,d=((sw-th)%(Math.PI*2)+Math.PI*2)%(Math.PI*2),it=1-d/(Math.PI*2),rad=r*(.35+.55*ecgT/100);
     g.globalAlpha=.25+.75*it;g.fillStyle=COL[ecgC];g.beginPath();g.arc(cx+Math.cos(th)*rad,cy+Math.sin(th)*rad,4+9*it,0,7);g.fill();g.globalAlpha=1;
     g.fillStyle="#fff";g.font="10px Arial";g.textAlign="center";g.fillText(NOTES[p],cx+Math.cos(th)*(r+0)*.97,cy+Math.sin(th)*r*.97+3)});
-});
-mkEcg("Lissajous de intervalos","#fff",(g,w,h,t)=>{
-  g.fillStyle="rgba(255,255,255,.14)";g.fillRect(0,0,w,h);
-  const n=active.size,a=n?2+([...active][0]%4):2,b=n?3+Math.min(n,4):3,amp=Math.min(w,h)*.4*(.5+ecgT/200);
-  g.lineWidth=3.5;g.globalAlpha=.8;g.strokeStyle=n?COL[ecgC]:"#bbb";g.beginPath();
-  for(let i=0;i<=240;i++){const u=i/240*Math.PI*2,x=w/2+Math.sin(a*u+t*.8)*amp*1.5,y=h/2+Math.sin(b*u)*amp;i?g.lineTo(x,y):g.moveTo(x,y)}
-  g.stroke();g.globalAlpha=1;
 });
 function sizeEc(){EC.forEach(o=>{o.c.width=o.c.clientWidth;o.c.height=o.c.clientHeight;o.st={}})}
 sizeEc();addEventListener("resize",sizeEc);
